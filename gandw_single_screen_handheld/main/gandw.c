@@ -685,7 +685,7 @@ void display_battery_level() {
     // max: 4.2v, min: 3.0v
 
     //testing    
-    voltage_at_adc_pin_mv = 2800;
+    //voltage_at_adc_pin_mv = 2800;
     
     float battery_voltage_level = ((float)voltage_at_adc_pin_mv * 0.00147) - 3.0f;
     float battery_percentage = 0.0f;

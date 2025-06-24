@@ -126,7 +126,8 @@ The diagrams below show how to mount the buttons:
 - DC:         GPIO 9
 - MOSI        GPIO 11
 - SCK:        GPIO 12
-- LED:        ESP32 3.3v
+- LEDA:       ESP32 3.3v
+- LEDK1       GND  
 
 ## Max98357
 - VIN:        ESP32 3.3v
