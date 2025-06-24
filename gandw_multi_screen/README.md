@@ -1,5 +1,5 @@
 # Description
-An demo program using minimal code to run a multi screen game and watch rom on an esp32s3 via LCD Game Emulator.
+A demo program using minimal code to run a multi screen game and watch rom on an esp32s3 via LCD Game Emulator.
 
 ![Oil Panic](../assets/oil_panic.jpg)
 
