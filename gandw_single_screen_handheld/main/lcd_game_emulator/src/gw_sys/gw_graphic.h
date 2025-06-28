@@ -41,5 +41,6 @@ __license__ = "GPLv3"
 void gw_gfx_init();
 void gw_gfx_sm500_rendering(uint16 *framebuffer);
 void gw_gfx_sm510_rendering(uint16 *framebuffer);
+void gw_gfx_sm500_rendering_octopus(uint16 *framebuffer);
 
 #endif /* _GW_GRAPHIC_H_ */

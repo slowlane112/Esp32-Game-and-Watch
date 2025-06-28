@@ -79,11 +79,12 @@ Battery level is displayed on power up.
 
 A TP4056 module is used to charge the battery. These modules are designed for charging 18650 batteries at 1A.
 
-For charing 10440 batteries, resistor R3 should be replaced with a 4.7kΩ resistor. This will charge the battery at approximately 250mA.
+To charge 10440 batteries, resistor R3 should be replaced with a 4.7kΩ resistor. This will charge the battery at approximately 250mA. To make it easier, after removing resistor R3, you can connect a wire to pin 2 of the main IC and mount the 4.7kΩ resistor on a perfboard with the other end connected to ground.
 
-A mosfet (AO3401A) is used to disconnect the load from the battery while it is charging. This can be skipped if you remember to always turn off the device when it is charging.
+A mosfet (AO3401A) is used to disconnect the load from the battery while it is charging. This can be skipped if you remember to always turn off the device when it is charging. If you plan on using the mosfet, you can connect a wire to pin 4 of the main IC, and connect the other end to the schottky diode leading to the mosfet gate.
 
-The TP4056 can only be mounted via the holes in the USB voltage pads. When you insert a screw into the pads it might break the connection between the top and bottom pads. Check after connecting and if the connection is broken you might need to use a jumper wire to fix the issue.
+The TP4056 can only be mounted via the holes in the USB voltage pads. When you insert a screw into the pads it might break the connection between the top and bottom pads. If you plan to use these pads check to make sure the connection is not broken after you screw them in place.
+
 
 ## Battery Level Indicator
 
@@ -101,7 +102,7 @@ View 3D files: [Single Screen Handheld 3D Files](../assets/3d_files/gandw_single
 
 ## Button Circuit Boards
 
-The buttons need to be mounted on 2.54mm perfboard. 
+The buttons need to be mounted on 2.54mm pitch perfboard. 
 
 The alarm and ACL buttons need to be mounted slightly high on the board. Use the spacer (alarm_acl_button_spacer.stl) to mount them at the correct height.
 
@@ -127,7 +128,7 @@ The diagrams below show how to mount the buttons:
 - MOSI        GPIO 11
 - SCK:        GPIO 12
 - LEDA:       ESP32 3.3v
-- LEDK1       GND  
+- LEDK1:      GND  
 
 ## Max98357
 - VIN:        ESP32 3.3v
@@ -148,7 +149,96 @@ The diagrams below show how to mount the buttons:
 ## Battery Level
 - Battery +:   GPIO 16 (via voltage divider)
 
+# Roms
 
+The roms must be in .gw format. See the CMakeLists.txt file in the main directory for the list of rom files required.
+
+These can be created using LCD-Game-Shrinker.
+
+https://github.com/bzhxx/LCD-Game-Shrinker
+
+Below is a link to a guide describing how to use LCD-Game-Shrinker to generate the files.
+
+https://gist.github.com/DNA64/16fed499d6bd4664b78b4c0a9638e4ef
+
+
+# Building
+Install the ESP-IDF framework. Current version is v5.4.1
+https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/get-started/index.html
+
+Make sure you can build the hello_world example project.
+
+Download the code from this repo.
+
+Use LCD-Game-Shrinker to generate a rom files. Rename the rom files to how they are specified in the CMakeLists.txt file, and place them in the /gandw_single_screen_handheld/main/ directory.
+
+Go back to /gandw_single_screen_handheld/ directory and open the terminal or cmd window in this directory.
+
+## Linux
+These instructions are for linux. If you are using windows follow the same steps you did when building the hello_world example project.
+
+Run the export.sh script or get_idf if you set it up.
+
+Export script should be similar to: 
+
+```
+. $HOME/esp/esp-idf/export.sh
+```
+
+Build: 
+```
+idf.py build
+```
+
+Then: 
+```
+idf.py -p /dev/ttyACM0 flash
+```
+
+You can also monitor by adding monitor at the end: 
+```
+idf.py -p /dev/ttyACM0 flash monitor 
+```
+
+Press Ctrl and ] to exit monitor.
+
+If you are getting errors try a fullclean before building: 
+```
+idf.py fullclean
+```
+
+# LCD Display
+
+## Orientation
+
+In the setup_lcd_spi function, there are 2 commands that you can use to change the screen orientation.
+
+- esp_lcd_panel_swap_xy
+- esp_lcd_panel_mirror
+
+## Pixel Data
+
+All the ILI9341 lcd panels i used required the pixel data to be byte swapped for the image to be displayed correctly.
+
+I have swapped the byte order for the background and segment pixel data in lcd game emulator.
+
+If the image displayed on your screen looks incorrect (wrong colours) you can remove the byte swap code.
+
+In the file: /main/lcd_game_emulator/src/gw_sys/gw_romloader.c, comment or remove the byte swap for loop.
+
+```
+    gw_background = (unsigned short *)&GW_ROM[gw_head.background_pixel];
+
+    // Byte swap background
+    /* for (int i = 0; i < GW_SCREEN_HEIGHT * GW_SCREEN_WIDTH; i++) {
+        gw_background[i] = (gw_background[i] >> 8) | (gw_background[i] << 8);
+    } */
+```
+In the file: /main/lcd_game_emulator/src/gw_sys/gw_graphic.c:
+
+Look for the rgb_multiply_8bits function.
+
+Comment the byte swap version and uncomment the non byte swap version.
 
 # Acknowledgements
 
