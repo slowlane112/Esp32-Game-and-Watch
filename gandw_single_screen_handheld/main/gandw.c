@@ -620,7 +620,7 @@ void display_volume_battery(unsigned short *framebuffer)
 
 }
 
-void display_battery_level() {
+void get_battery_level() {
 
     esp_err_t ret;
     
@@ -760,7 +760,7 @@ void app_main(void)
 
     read_volume();
 
-    display_battery_level();
+    get_battery_level();
 
     // Load ROM
     load_game();
