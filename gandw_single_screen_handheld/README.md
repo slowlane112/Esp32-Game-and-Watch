@@ -39,7 +39,8 @@ Battery level is displayed on power up.
 
 # Components
 - ESP32-S3-Zero
-- Lcd: 240x320 2.4 inch SPI panel with ILI9341 driver
+- LCD: 240x320 2.4 inch SPI panel with ILI9341 driver
+  (No board - LCD only, No Touch. AliExpress seller: XunMing Store)
 - Audio: Max98357 I2S Amp
 - Speaker: 20mm
 - USB-C TP4056 Battery Charger Module 
