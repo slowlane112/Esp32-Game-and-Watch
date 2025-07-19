@@ -1,4 +1,4 @@
-# Single Screen Handheld
+# Multi Screen Handheld
 
 
 # Disclaimer: 
@@ -12,17 +12,24 @@ You are strongly advised to conduct your own thorough research and ensure you ha
 Use the information provided in this project at your own risk.
 
 <table>
-<tr><td colspan="2"><img src="../assets/front.jpg" alt="Front" width="800"></td></tr>
-<tr><td colspan="2"><img src="../assets/internal.jpg" alt="Internal" width="800"></td></tr>
-<tr><td><img src="../assets/charge.jpg" alt="Internal" width="800"></td><td><img src="../assets/side.jpg" alt="Internal" width="555"></td></tr>
+<tr>
+    <td><img src="../assets/multi_screen_handheld_1.jpg" alt="Front" width="400"></td>
+    <td><img src="../assets/multi_screen_handheld_2.jpg" alt="Front" width="400"></td>
+</tr>
+<tr><td colspan="2"><img src="../assets/multi_internal.jpg" alt="Internal" width="800"></td></tr>
+<tr>
+    <td><img src="../assets/multi_screen_handheld_3.jpg" alt="Side" width="400"></td>
+    <td><img src="../assets/multi_screen_handheld_4.jpg" alt="Back" width="400"></td>
+</tr>
 </table>
 
 
 # Features
 
-## 12 Games
-Plays 12 two button game and watch games. 
-Use button combinations on power up to select the game (See source code).
+Plays 3 two button multi screen game and watch games. Press button on power up to select the game.
+Game A: Oil Panic
+Game B: Safebuster
+Time: Pinball
 Remembers last game selected if no buttons pressed on power up.
 
 ## Volume Adjustment
@@ -39,7 +46,7 @@ Battery level is displayed on power up.
 
 # Components
 - ESP32-S3-Zero
-- Display: 2.4 inch SPI panel 240x320 LCD with ILI9341 driver
+- Display: 2 x 2.4 inch SPI panel 240x320 LCD with ILI9341 driver
   (No board - LCD only, No Touch. AliExpress seller: XunMing Store)
 - Audio: Max98357 I2S Amp
 - Speaker: 20mm
@@ -49,10 +56,13 @@ Battery level is displayed on power up.
 - 3mm SS12d00 mini slide switch.
 - AO3401A mosfet
 - 1N5817 schottky diode
+- 10cm FFC Flexible Flat Ribbon Cable - 1.0mm Pitch 10 Pin.
+- FFC FPC connector adapter board. 10P - 1mm pitch.
 - Resistors: 2 x 4.7K, 10K and 100K
 - Screws M2 - 4mm, 6mm and 8mm long.
 - Screws to mount the TP4056 module. 2 x M1.5
-
+- Screws to mount the top display. 7 x M1.5 3mm long.
+- Hinge screws: M2 x 20mm long
 
 <table>
 <tr>
@@ -60,17 +70,33 @@ Battery level is displayed on power up.
     <td><img src="../assets/ILI9341_lcd_no_pcb.jpg" alt="" width="400"></td>
     <td><img src="../assets/max98357.jpg" alt="" width="400"></td>    
     <td><img src="../assets/20mm_speaker.jpg" alt="" width="400"></td>
+    <td><img src="../assets/tp4056.jpg" alt="" width="400"></td>
 </tr>
 </table>
 
 <table>
 <tr>
-    <td><img src="../assets/tp4056.jpg" alt="" width="400"></td>
     <td><img src="../assets/10440.jpg" alt="" width="400"></td>
     <td><img src="../assets/mini_push_button.jpg" alt="" width="400"></td>
     <td><img src="../assets/mini_slide_switch.jpg" alt="" width="400"></td>
+    <td><img src="../assets/ffc_ribbon.jpg" alt="" width="400"></td>
+    <td><img src="../assets/ffc_fpc_connector_adapter.jpg" alt="" width="400"></td>
 </tr>
 </table>
+
+# Top Screen
+
+<table>
+<tr>
+    <td><img src="../assets/multi_top_1.jpg" alt="" width="800"></td>
+    <td><img src="../assets/multi_top_2.jpg" alt="" width="800"></td>
+    <td><img src="../assets/multi_top_3.jpg" alt="" width="400"></td>
+</tr>
+</table>
+
+Connect the display to a 10 pin ribbon cable using small wires.
+
+In the bottom screen section, trim size of ribbon cable connector adapter board so it will fit in space near the speaker.
 
 # Power
 
@@ -99,7 +125,12 @@ A jumper has been placed between the ESP32 5v pin and the switch. This jumper sh
 
 ## 3D Files
 
-View 3D files: [Single Screen Handheld 3D Files](../assets/3d_files/gandw_single_screen_handheld/)
+View 3D files: [Multi Screen Handheld 3D Files](../assets/3d_files/gandw_mulit_screen_handheld/)
+
+For a cleaner print and to save on supports "top case front" and "bottom case front" can be printed in parts.
+
+If printing in parts to ensure proper alignment, glue the hinges in place while they are attached to the top case.
+
 
 ## Button Circuit Boards
 
@@ -117,10 +148,9 @@ The diagrams below show how to mount the buttons:
 </table>
 
 
-
 # Wiring
 
-## LCD ILI9341
+## LCD 1 ILI9341
 - VCC:        ESP32 3.3v
 - GND:        GND
 - CS:         GND
@@ -130,6 +160,17 @@ The diagrams below show how to mount the buttons:
 - SCK:        GPIO 12
 - LEDA:       ESP32 3.3v
 - LEDK1:      GND  
+
+## LCD 2 ILI9341
+- VCC:        ESP32 3.3v
+- GND:        GND
+- CS:         GND
+- RESET:      GPIO 39
+- DC:         GPIO 38
+- MOSI        GPIO 17
+- SCK:        GPIO 18
+- LEDA:       ESP32 3.3v
+- LEDK1:      GND
 
 ## Max98357
 - VIN:        ESP32 3.3v
@@ -150,9 +191,18 @@ The diagrams below show how to mount the buttons:
 ## Battery Level
 - Battery +:   GPIO 16 (via voltage divider)
 
-# Roms
+# Screen Resolution
+The ESP32-S3-Zero does not have enough memory to display 2 screens at 320 x 240 resolution.
 
-The roms must be in .gw format. See the CMakeLists.txt file in the main directory for the list of rom files required.
+It does have enough memory to display 2 screens at 320 x 210 resolution.
+
+This is closer to the aspect ratio of the original multi screen game and watch games and what i have used in this project.
+
+This makes the total resolution 320 x 420.
+
+
+# Roms
+The roms must be in .gw format.
 
 These can be created using LCD-Game-Shrinker.
 
@@ -161,6 +211,91 @@ https://github.com/bzhxx/LCD-Game-Shrinker
 Below is a link to a guide describing how to use LCD-Game-Shrinker to generate the files.
 
 https://gist.github.com/DNA64/16fed499d6bd4664b78b4c0a9638e4ef
+
+## Additional Steps for Multi Screen Games
+
+LCD Game Shrinker will convert multi screen games into one screen games in portrait mode, so we need to do some additional steps when generating the gw files.
+
+Below are instructions to fix oil panic. All other multi screen games will be similar.
+
+Make a copy of LCD-Game-Shrinker to use for multi screen games.
+
+In the file shrink_it.py set: 
+```
+gw_height=420
+```
+In the custom directory, edit gnw_opanic.py
+
+set rom.rotate to false
+```
+rom.rotate = False
+```
+Change rom.width_border_ratio from:
+```
+rom.width_border_ratio = 10/100
+```
+to:
+```
+rom.width_border_ratio = 0
+```
+
+## Black border between screens
+If you run LCD Game Shrinker now there will be a black bar of about 10 pixels between the top and bottom screen.
+The gw file will still work ok, but it is a good idea to remove it as it is wasting 10 pixels from the display.
+
+To remove the black bar you need to:
+
+- Extract the artwork zip file.
+- Edit the default.lay file to remove the black bar.
+- Zip the files again with the updated default.lay file.
+
+In the default.lay file, find the view with the Backgrounds Only. (They usually have a height of 1669).
+
+There is usually more than 1 background view. I am not sure which view LCD Game Shrinker uses so i was just updating all of them. They all use that same values so it is quick to update all of them at the same time.
+
+
+```
+<view name="Backgrounds Only">
+
+<bounds x="32" y="33" width="1296" height="1669" />
+	
+	<element ref="Screen-Top">					<bounds x="32" y="33" width="1296" height="817" /></element>
+	<screen index="0" blend="multiply">			<bounds x="1" y="9" width="1349" height="899" /></screen>
+	<element ref="Screen-Top">					<bounds x="32" y="33" width="1296" height="817" /><color alpha="0.0" /></element>
+	
+	<element ref="Screen-Bottom">				<bounds x="32" y="885" width="1296" height="817" /></element>
+	<screen index="1" blend="multiply">			<bounds x="-1" y="903" width="1371" height="878" /></screen>
+	<element ref="Screen-Bottom">				<bounds x="32" y="885" width="1296" height="817" /><color alpha="0.00" /></element>
+	<element ref="Balcony">				<bounds x="32" y="885" width="1296" height="817" /><color alpha="0.5" /></element>
+
+</view>
+```
+
+New height: (Screen-Top + Screen-Bottom) 817 + 817 = 1634
+
+Height difference: 1669 - 1634 = 35
+
+Bounds height attribute is updated with the new height.
+
+The height difference is removed from the y attribute of all the bottom screen elements.
+
+
+```
+<view name="Backgrounds Only">
+
+<bounds x="32" y="33" width="1296" height="1634" />
+	
+	<element ref="Screen-Top">					<bounds x="32" y="33" width="1296" height="817" /></element>
+	<screen index="0" blend="multiply">			<bounds x="1" y="9" width="1349" height="899" /></screen>
+	<element ref="Screen-Top">					<bounds x="32" y="33" width="1296" height="817" /><color alpha="0.0" /></element>
+	
+	<element ref="Screen-Bottom">				<bounds x="32" y="850" width="1296" height="817" /></element>
+	<screen index="1" blend="multiply">			<bounds x="-1" y="868" width="1371" height="878" /></screen>
+	<element ref="Screen-Bottom">				<bounds x="32" y="850" width="1296" height="817" /><color alpha="0.00" /></element>
+	<element ref="Balcony">				<bounds x="32" y="850" width="1296" height="817" /><color alpha="0.5" /></element>
+
+</view>
+```
 
 
 # Building
@@ -171,9 +306,9 @@ Make sure you can build the hello_world example project.
 
 Download the code from this repo.
 
-Use LCD-Game-Shrinker to generate a rom files. Rename the rom files to how they are specified in the CMakeLists.txt file, and place them in the /gandw_single_screen_handheld/main/ directory.
+Use LCD-Game-Shrinker to generate a rom file for oil panic. Rename the files to gnwoilpanic.gw, gnwsafebuster.gw and gnwpinball.gw then place the files in the /gandw_multi_screen/main/ directory.
 
-Go back to /gandw_single_screen_handheld/ directory and open the terminal or cmd window in this directory.
+Go back to /gandw_multi_screen/ directory and open the terminal or cmd window in this directory.
 
 ## Linux
 These instructions are for linux. If you are using windows follow the same steps you did when building the hello_world example project.
