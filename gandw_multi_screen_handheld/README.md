@@ -125,7 +125,7 @@ A jumper has been placed between the ESP32 5v pin and the switch. This jumper sh
 
 ## 3D Files
 
-View 3D files: [Multi Screen Handheld 3D Files](../assets/3d_files/gandw_mulit_screen_handheld/)
+View 3D files: [Multi Screen Handheld 3D Files](../assets/3d_files/gandw_multi_screen_handheld/)
 
 For a cleaner print and to save on supports "top case front" and "bottom case front" can be printed in parts.
 
