@@ -31,3 +31,12 @@ https://github.com/slowlane112/Esp32-Game-and-Watch/tree/main/gandw_single_scree
 </a>
 
 https://github.com/slowlane112/Esp32-Game-and-Watch/tree/main/gandw_multi_screen_handheld
+
+
+## Multi Screen D-pad Handheld
+
+<a href="https://github.com/slowlane112/Esp32-Game-and-Watch/tree/main/gandw_multi_screen_dpad_handheld">
+    <img src="assets/multi_screen_dpad_handheld_1.jpg" alt="Multi Screen Handheld" width="200">
+</a>
+
+https://github.com/slowlane112/Esp32-Game-and-Watch/tree/main/gandw_multi_screen_dpad_handheld

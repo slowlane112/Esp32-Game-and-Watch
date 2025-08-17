@@ -18,8 +18,8 @@
 #include "esp_adc/adc_cali.h"
 
 #define DISPLAY_HEIGHT      240
-#define RENDER_HEIGHT       240
-#define RENDER_PADDING      0
+#define RENDER_HEIGHT       210
+#define RENDER_PADDING      15
 
 // battery
 #define BATT_ADC_UNIT        ADC_UNIT_2
@@ -31,8 +31,11 @@
 #define BUTTON_GAME_A       GPIO_NUM_14
 #define BUTTON_GAME_B       GPIO_NUM_5
 #define BUTTON_TIME         GPIO_NUM_3
-#define BUTTON_LEFT         GPIO_NUM_2
-#define BUTTON_RIGHT        GPIO_NUM_1
+#define BUTTON_LEFT         GPIO_NUM_41
+#define BUTTON_RIGHT        GPIO_NUM_40
+#define BUTTON_UP           GPIO_NUM_42
+#define BUTTON_DOWN         GPIO_NUM_2
+#define BUTTON_JUMP         GPIO_NUM_1
 #define BUTTON_ALARM        GPIO_NUM_7
 #define BUTTON_ACL          GPIO_NUM_8
 
@@ -46,6 +49,13 @@
 #define LCD_MISO            -1
 #define LCD_DC              9
 #define LCD_RST             13
+
+#define LCD_2_HOST          SPI3_HOST
+#define LCD_2_SCLK          18
+#define LCD_2_MOSI          17
+#define LCD_2_MISO          -1
+#define LCD_2_DC            38
+#define LCD_2_RST           39
 
 // audio
 #define AUD_I2S_BCK         10
@@ -66,8 +76,6 @@ unsigned char *ROM_DATA;
 unsigned int ROM_DATA_LENGTH;
 
 volatile bool lcd_transfer_in_progress = false;
-
-uint8_t control_button_mode = 0;
 
 static bool on_color_trans_done(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel_io_event_data_t *event_data, void *user_ctx) {
     lcd_transfer_in_progress = false;
@@ -119,37 +127,6 @@ void set_volume(bool is_up) {
     }
 }
 
-
-unsigned int gw_get_default_buttons() {
-	
-	uint32_t hw_buttons = 0;
-	
-	if (gpio_get_level(BUTTON_GAME_A) == 0) { 
-        hw_buttons |= GW_BUTTON_GAME;
-    }
-    else if (gpio_get_level(BUTTON_GAME_B) == 0) {
-        hw_buttons |= GW_BUTTON_TIME;
-    }
-	
-	return hw_buttons;
-        
-}
-
-unsigned int gw_get_tropicalfish__buttons() {
-	
-	uint32_t hw_buttons = 0;
-	
-	if (gpio_get_level(BUTTON_GAME_A) == 0) { 
-        hw_buttons |= GW_BUTTON_TIME;
-    }
-    else if (gpio_get_level(BUTTON_GAME_B) == 0) {
-        hw_buttons |= GW_BUTTON_GAME;
-    }
-	
-	return hw_buttons;
-        
-}
-
 unsigned int gw_get_buttons()
 {
     uint32_t hw_buttons = 0;
@@ -175,19 +152,26 @@ unsigned int gw_get_buttons()
         else if (gpio_get_level(BUTTON_LEFT) == 0) {
                 hw_buttons |= GW_BUTTON_LEFT;
         }
+        else if (gpio_get_level(BUTTON_UP) == 0) { 
+            hw_buttons |= GW_BUTTON_UP;
+        }
+        else if (gpio_get_level(BUTTON_DOWN) == 0) {
+                hw_buttons |= GW_BUTTON_DOWN;
+        }
+        else if (gpio_get_level(BUTTON_JUMP) == 0) {
+                hw_buttons |= GW_BUTTON_A;
+        }
+        else if (gpio_get_level(BUTTON_GAME_A) == 0) { 
+            hw_buttons |= GW_BUTTON_GAME;
+        }
+        else if (gpio_get_level(BUTTON_GAME_B) == 0) {
+            hw_buttons |= GW_BUTTON_TIME;
+        }
         else if (gpio_get_level(BUTTON_ALARM) == 0) {
             hw_buttons |= GW_BUTTON_B + GW_BUTTON_GAME;
         }
         else if (gpio_get_level(BUTTON_ACL) == 0) {
             gw_system_reset();
-        }
-        else {
-            if (control_button_mode == 1) {
-				hw_buttons = gw_get_tropicalfish__buttons();
-			}
-			else {
-				hw_buttons = gw_get_default_buttons();
-			}
         }
 
     }
@@ -222,7 +206,7 @@ i2s_chan_handle_t setup_audio_i2s() {
 
 }
 
-esp_lcd_panel_handle_t setup_lcd_spi() {
+esp_lcd_panel_handle_t setup_lcd_1_spi() {
 
     esp_lcd_panel_handle_t spi_lcd_handle = NULL;
     esp_lcd_panel_io_handle_t io_handle = NULL;
@@ -259,7 +243,49 @@ esp_lcd_panel_handle_t setup_lcd_spi() {
     ESP_ERROR_CHECK(esp_lcd_panel_reset(spi_lcd_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_init(spi_lcd_handle));
     esp_lcd_panel_swap_xy(spi_lcd_handle, true);
-    esp_lcd_panel_mirror(spi_lcd_handle, true, true);
+    //esp_lcd_panel_mirror(spi_lcd_handle, true, true);
+    ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(spi_lcd_handle, true));
+
+    return spi_lcd_handle;
+}
+
+esp_lcd_panel_handle_t setup_lcd_2_spi() {
+
+    esp_lcd_panel_handle_t spi_lcd_handle = NULL;
+    esp_lcd_panel_io_handle_t io_handle = NULL;
+
+    spi_bus_config_t buscfg = {
+        .sclk_io_num = LCD_2_SCLK,
+        .mosi_io_num = LCD_2_MOSI,
+        .miso_io_num = LCD_2_MISO,
+        .quadwp_io_num = -1,
+        .quadhd_io_num = -1,
+        .max_transfer_sz = GW_SCREEN_WIDTH * 80 * sizeof(uint16_t),
+    };
+    ESP_ERROR_CHECK(spi_bus_initialize(LCD_2_HOST, &buscfg, SPI_DMA_CH_AUTO));
+
+    esp_lcd_panel_io_spi_config_t io_config = {
+        .dc_gpio_num = LCD_2_DC,
+        .cs_gpio_num = -1,
+        .pclk_hz = LCD_PIXEL_CLOCK_HZ,
+        .lcd_cmd_bits = LCD_CMD_BITS,
+        .lcd_param_bits = LCD_PARAM_BITS,
+        .spi_mode = 0,
+        .trans_queue_depth = 10,
+    };
+    ESP_ERROR_CHECK(esp_lcd_new_panel_io_spi((esp_lcd_spi_bus_handle_t)LCD_2_HOST, &io_config, &io_handle));
+
+    esp_lcd_panel_dev_config_t panel_config = {
+        .reset_gpio_num = LCD_2_RST,
+        .rgb_ele_order = LCD_RGB_ELEMENT_ORDER_BGR,
+        .bits_per_pixel = 16,
+    };
+    ESP_ERROR_CHECK(esp_lcd_new_panel_ili9341(io_handle, &panel_config, &spi_lcd_handle));
+
+    ESP_ERROR_CHECK(esp_lcd_panel_reset(spi_lcd_handle));
+    ESP_ERROR_CHECK(esp_lcd_panel_init(spi_lcd_handle));
+    esp_lcd_panel_swap_xy(spi_lcd_handle, true);
+    //esp_lcd_panel_mirror(spi_lcd_handle, true, true);
     ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(spi_lcd_handle, true));
 
     return spi_lcd_handle;
@@ -294,17 +320,29 @@ void setup_buttons() {
     esp_rom_gpio_pad_select_gpio(BUTTON_RIGHT);
     gpio_set_direction(BUTTON_RIGHT, GPIO_MODE_INPUT);
     gpio_set_pull_mode(BUTTON_RIGHT, GPIO_PULLUP_ONLY);
+    
+    esp_rom_gpio_pad_select_gpio(BUTTON_UP);
+    gpio_set_direction(BUTTON_UP, GPIO_MODE_INPUT);
+    gpio_set_pull_mode(BUTTON_UP, GPIO_PULLUP_ONLY);
+
+    esp_rom_gpio_pad_select_gpio(BUTTON_DOWN);
+    gpio_set_direction(BUTTON_DOWN, GPIO_MODE_INPUT);
+    gpio_set_pull_mode(BUTTON_DOWN, GPIO_PULLUP_ONLY);
+    
+	esp_rom_gpio_pad_select_gpio(BUTTON_JUMP);
+    gpio_set_direction(BUTTON_JUMP, GPIO_MODE_INPUT);
+    gpio_set_pull_mode(BUTTON_JUMP, GPIO_PULLUP_ONLY);
 
 }
 
 uint8_t read_selected_game() {
-    uint8_t selected_game = 1; // gnwparachute
+    uint8_t selected_game = 1; // gnwdonkeykong
     nvs_handle_t my_handle;
     ESP_ERROR_CHECK(nvs_open("gandw", NVS_READWRITE, &my_handle));
     nvs_get_u8(my_handle, "selected_game", &selected_game);
     nvs_close(my_handle);
 
-    if (selected_game < 1 || selected_game > 12) {
+    if (selected_game < 1 || selected_game > 6) {
         selected_game = 1;
     }
 
@@ -320,78 +358,44 @@ void save_selected_game(uint8_t selected_game) {
 }
 
 void load_game() {
-
+	
     uint8_t gs1 = gpio_get_level(BUTTON_GAME_A);
     uint8_t gs2 = gpio_get_level(BUTTON_GAME_B);
     uint8_t gs3 = gpio_get_level(BUTTON_TIME);
-    uint8_t gs4 = gpio_get_level(BUTTON_LEFT);
-    uint8_t gs5 = gpio_get_level(BUTTON_RIGHT);
 
-    extern const uint8_t gnwparachute_gw_start[] asm("_binary_gnwparachute_gw_start");
-    extern const uint8_t gnwparachute_gw_end[] asm("_binary_gnwparachute_gw_end");
-    extern const uint8_t gnwoctopus_gw_start[] asm("_binary_gnwoctopus_gw_start");
-    extern const uint8_t gnwoctopus_gw_end[] asm("_binary_gnwoctopus_gw_end");
-    extern const uint8_t gnwfire_gw_start[] asm("_binary_gnwfire_gw_start");
-    extern const uint8_t gnwfire_gw_end[] asm("_binary_gnwfire_gw_end");
-    extern const uint8_t gnwchef_gw_start[] asm("_binary_gnwchef_gw_start");
-    extern const uint8_t gnwchef_gw_end[] asm("_binary_gnwchef_gw_end");
-    extern const uint8_t gnwpopeye_gw_start[] asm("_binary_gnwpopeye_gw_start");
-    extern const uint8_t gnwpopeye_gw_end[] asm("_binary_gnwpopeye_gw_end");
-    extern const uint8_t gnwturtlebridge_gw_start[] asm("_binary_gnwturtlebridge_gw_start");
-    extern const uint8_t gnwturtlebridge_gw_end[] asm("_binary_gnwturtlebridge_gw_end");
-    extern const uint8_t gnwvermin_gw_start[] asm("_binary_gnwvermin_gw_start");
-    extern const uint8_t gnwvermin_gw_end[] asm("_binary_gnwvermin_gw_end");
-    extern const uint8_t gnwball_gw_start[] asm("_binary_gnwball_gw_start");
-    extern const uint8_t gnwball_gw_end[] asm("_binary_gnwball_gw_end");
-    extern const uint8_t gnwfiresilver_gw_start[] asm("_binary_gnwfiresilver_gw_start");
-    extern const uint8_t gnwfiresilver_gw_end[] asm("_binary_gnwfiresilver_gw_end");
-    extern const uint8_t gnwhelmet_gw_start[] asm("_binary_gnwhelmet_gw_start");
-    extern const uint8_t gnwhelmet_gw_end[] asm("_binary_gnwhelmet_gw_end");
-    extern const uint8_t gnwmariothejuggler_gw_start[] asm("_binary_gnwmariothejuggler_gw_start");
-    extern const uint8_t gnwmariothejuggler_gw_end[] asm("_binary_gnwmariothejuggler_gw_end");
-    extern const uint8_t gnwtropicalfish_gw_start[] asm("_binary_gnwtropicalfish_gw_start");
-    extern const uint8_t gnwtropicalfish_gw_end[] asm("_binary_gnwtropicalfish_gw_end");
+    extern const uint8_t gnwbombsweeper_gw_start[] asm("_binary_gnwbombsweeper_gw_start");
+    extern const uint8_t gnwbombsweeper_gw_end[] asm("_binary_gnwbombsweeper_gw_end");
+    extern const uint8_t gnwdonkeykong_gw_start[] asm("_binary_gnwdonkeykong_gw_start");
+    extern const uint8_t gnwdonkeykong_gw_end[] asm("_binary_gnwdonkeykong_gw_end");
+    extern const uint8_t gnwdonkeykong2_gw_start[] asm("_binary_gnwdonkeykong2_gw_start");
+    extern const uint8_t gnwdonkeykong2_gw_end[] asm("_binary_gnwdonkeykong2_gw_end");
+    extern const uint8_t gnwgoldcliff_gw_start[] asm("_binary_gnwgoldcliff_gw_start");
+    extern const uint8_t gnwgoldcliff_gw_end[] asm("_binary_gnwgoldcliff_gw_end");
+    extern const uint8_t gnwgreenhouse_gw_start[] asm("_binary_gnwgreenhouse_gw_start");
+    extern const uint8_t gnwgreenhouse_gw_end[] asm("_binary_gnwgreenhouse_gw_end");  
+    extern const uint8_t gnwzelda_gw_start[] asm("_binary_gnwzelda_gw_start");
+    extern const uint8_t gnwzelda_gw_end[] asm("_binary_gnwzelda_gw_end");            
 
     uint8_t selected_game = 0;
 
-
-    if (gs4 == 0 && gs3 == 0) { // left and time
-        selected_game = 11; // gnwmariothejuggler
-    }
-    else if (gs5 == 0 && gs3 == 0) { // right and time
-        selected_game = 12; // gnwtropicalfish
-    }
-    else if (gs1 == 0 && gs2 == 1 && gs3 == 1) { // 100
-        selected_game = 1; // gnwparachute
+    if (gs1 == 0 && gs2 == 1 && gs3 == 1) { // 100
+        selected_game = 1; // gnwdonkeykong
     }
     else if (gs1 == 1 && gs2 == 0 && gs3 == 1) { // 010
-        selected_game = 2; // gnwoctopus
+        selected_game = 2; // gnwgreenhouse
     }
     else if (gs1 == 1 && gs2 == 1 && gs3 == 0) { // 001
-        selected_game = 3; // gnwfire
+        selected_game = 3; // gnwzelda
     }
     else if (gs1 == 0 && gs2 == 0 && gs3 == 1) { // 110
-        selected_game = 4; // gnwchef
+        selected_game = 4; // gnwdonkeykong2
     }
     else if (gs1 == 1 && gs2 == 0 && gs3 == 0) { // 011
-        selected_game = 5; // gnwpopeye
+        selected_game = 5; // gnwbombsweeper
     }
     else if (gs1 == 0 && gs2 == 1 && gs3 == 0) { // 101
-        selected_game = 6; // gnwturtlebridge
+        selected_game = 6; // gnwgoldcliff
     }
-    else if (gs1 == 0 && gs2 == 0 && gs3 == 0) { // 111
-        selected_game = 7; // gnwvermin
-    }
-    else if (gs4 == 0 && gs5 == 1) { // left
-        selected_game = 8; // gnwball
-    }
-    else if (gs4 == 1 && gs5 == 0) { // right
-        selected_game = 9; // gnwfiresilver
-    }
-    else if (gs4 == 0 && gs5 == 0) { // left and right
-        selected_game = 10; // gnwhelmet
-    }
-
 
     if (selected_game == 0) {
         selected_game = read_selected_game();
@@ -401,56 +405,29 @@ void load_game() {
 
     save_selected_game(selected_game);
 
-    control_button_mode = 0;
-
-    if (selected_game == 1) {
-        ROM_DATA = (unsigned char *)gnwparachute_gw_start;
-        ROM_DATA_LENGTH = gnwparachute_gw_end - gnwparachute_gw_start;
-    }
-    else if (selected_game == 2) { 
-        ROM_DATA = (unsigned char *)gnwoctopus_gw_start;
-        ROM_DATA_LENGTH = gnwoctopus_gw_end - gnwoctopus_gw_start;
+    if (selected_game == 2) {
+        ROM_DATA = (unsigned char *)gnwgreenhouse_gw_start;
+        ROM_DATA_LENGTH = gnwgreenhouse_gw_end - gnwgreenhouse_gw_start;
     }
     else if (selected_game == 3) {
-        ROM_DATA = (unsigned char *)gnwfire_gw_start;
-        ROM_DATA_LENGTH = gnwfire_gw_end - gnwfire_gw_start;
+        ROM_DATA = (unsigned char *)gnwzelda_gw_start;
+        ROM_DATA_LENGTH = gnwzelda_gw_end - gnwzelda_gw_start;
     }
     else if (selected_game == 4) {
-        ROM_DATA = (unsigned char *)gnwchef_gw_start;
-        ROM_DATA_LENGTH = gnwchef_gw_end - gnwchef_gw_start;
+        ROM_DATA = (unsigned char *)gnwdonkeykong2_gw_start;
+        ROM_DATA_LENGTH = gnwdonkeykong2_gw_end - gnwdonkeykong2_gw_start;
     }
     else if (selected_game == 5) {
-        ROM_DATA = (unsigned char *)gnwpopeye_gw_start;
-        ROM_DATA_LENGTH = gnwpopeye_gw_end - gnwpopeye_gw_start;
+        ROM_DATA = (unsigned char *)gnwbombsweeper_gw_start;
+        ROM_DATA_LENGTH = gnwbombsweeper_gw_end - gnwbombsweeper_gw_start;
     }
     else if (selected_game == 6) {
-        ROM_DATA = (unsigned char *)gnwturtlebridge_gw_start;
-        ROM_DATA_LENGTH = gnwturtlebridge_gw_end - gnwturtlebridge_gw_start;
+        ROM_DATA = (unsigned char *)gnwgoldcliff_gw_start;
+        ROM_DATA_LENGTH = gnwgoldcliff_gw_end - gnwgoldcliff_gw_start;
     }
-    else if (selected_game == 7) {
-        ROM_DATA = (unsigned char *)gnwvermin_gw_start;
-        ROM_DATA_LENGTH = gnwvermin_gw_end - gnwvermin_gw_start;
-    }
-    else if (selected_game == 8) {
-        ROM_DATA = (unsigned char *)gnwball_gw_start;
-        ROM_DATA_LENGTH = gnwball_gw_end - gnwball_gw_start;
-    }
-    else if (selected_game == 9) {
-        ROM_DATA = (unsigned char *)gnwfiresilver_gw_start;
-        ROM_DATA_LENGTH = gnwfiresilver_gw_end - gnwfiresilver_gw_start;
-    }
-    else if (selected_game == 10) {
-        ROM_DATA = (unsigned char *)gnwhelmet_gw_start;
-        ROM_DATA_LENGTH = gnwhelmet_gw_end - gnwhelmet_gw_start;
-    }
-    else if (selected_game == 11) {
-        ROM_DATA = (unsigned char *)gnwmariothejuggler_gw_start;
-        ROM_DATA_LENGTH = gnwmariothejuggler_gw_end - gnwmariothejuggler_gw_start;
-    }
-    else { // 12
-        ROM_DATA = (unsigned char *)gnwtropicalfish_gw_start;
-        ROM_DATA_LENGTH = gnwtropicalfish_gw_end - gnwtropicalfish_gw_start;
-        control_button_mode = 1;
+    else {
+        ROM_DATA = (unsigned char *)gnwdonkeykong_gw_start;
+        ROM_DATA_LENGTH = gnwdonkeykong_gw_end - gnwdonkeykong_gw_start;
     }
 }
 
@@ -781,7 +758,8 @@ void app_main(void)
     i2s_chan_handle_t i2s_audio_handle = setup_audio_i2s();
 
     // screen
-    esp_lcd_panel_handle_t spi_lcd_handle = setup_lcd_spi();
+    esp_lcd_panel_handle_t spi_lcd_1_handle = setup_lcd_1_spi();
+    esp_lcd_panel_handle_t spi_lcd_2_handle = setup_lcd_2_spi();
 
 
     // buttons
@@ -795,6 +773,14 @@ void app_main(void)
         ESP_ERROR_CHECK(nvs_flash_erase());
         ESP_ERROR_CHECK(nvs_flash_init());
     }
+
+    // blank screen at start up
+    for (int i = 0; i < DISPLAY_HEIGHT * GW_SCREEN_WIDTH; i++) {
+        framebuffer[i] = 0x0000;
+    }
+    esp_lcd_panel_draw_bitmap(spi_lcd_1_handle, 0, 0, GW_SCREEN_WIDTH, DISPLAY_HEIGHT, framebuffer);
+    esp_lcd_panel_draw_bitmap(spi_lcd_2_handle, 0, 0, GW_SCREEN_WIDTH, DISPLAY_HEIGHT, framebuffer);
+
 
     read_volume();
 
@@ -837,7 +823,8 @@ void app_main(void)
                 display_volume_battery(framebuffer);
             }
 
-            esp_lcd_panel_draw_bitmap(spi_lcd_handle, 0, RENDER_PADDING, GW_SCREEN_WIDTH, RENDER_HEIGHT + RENDER_PADDING, framebuffer);
+            esp_lcd_panel_draw_bitmap(spi_lcd_2_handle, 0, RENDER_PADDING, GW_SCREEN_WIDTH, RENDER_HEIGHT + RENDER_PADDING, framebuffer);
+            esp_lcd_panel_draw_bitmap(spi_lcd_1_handle, 0, RENDER_PADDING, GW_SCREEN_WIDTH, RENDER_HEIGHT + RENDER_PADDING, framebuffer + (GW_SCREEN_WIDTH * RENDER_HEIGHT));
         }
 
         // audio
