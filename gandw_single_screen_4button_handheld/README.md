@@ -11,7 +11,18 @@ You are strongly advised to conduct your own thorough research and ensure you ha
 
 Use the information provided in this project at your own risk.
 
-
+<table>
+<tr><td colspan="2"><img src="../assets/4button_handheld_1.jpg" alt="4 Button Handheld" width="800"></td></tr>
+<tr><td colspan="2"><img src="../assets/4button_handheld_2.jpg" alt="4 Button Handheld" width="800"></td></tr>
+<tr>
+    <td><img src="../assets/4button_handheld_3.jpg" alt="4 Button Handheld" width="400"></td>
+    <td><img src="../assets/4button_handheld_4.jpg" alt="4 Button Handheld" width="400"></td>
+</tr>
+<tr>
+    <td><img src="../assets/4button_handheld_5.jpg" alt="4 Button Handheld" width="400"></td>
+    <td><img src="../assets/4button_handheld_6.jpg" alt="4 Button Handheld" width="400"></td>
+</tr>
+</table>
 
 
 # Features

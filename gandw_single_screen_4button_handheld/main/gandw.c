@@ -323,7 +323,7 @@ esp_lcd_panel_handle_t setup_lcd_spi() {
     ESP_ERROR_CHECK(esp_lcd_panel_reset(spi_lcd_handle));
     ESP_ERROR_CHECK(esp_lcd_panel_init(spi_lcd_handle));
     esp_lcd_panel_swap_xy(spi_lcd_handle, true);
-    esp_lcd_panel_mirror(spi_lcd_handle, true, true);
+    //esp_lcd_panel_mirror(spi_lcd_handle, true, true);
     ESP_ERROR_CHECK(esp_lcd_panel_disp_on_off(spi_lcd_handle, true));
 
     return spi_lcd_handle;
