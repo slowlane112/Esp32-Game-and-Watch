@@ -143,12 +143,7 @@ bool gw_system_config()
 		device_start = sm5a_device_start;
 		device_reset = sm5a_device_reset;
 		device_run = sm5a_execute_run;
-		if (memcmp(gw_head.rom_signature, "_octopus", 8) == 0) {
-             device_blit = gw_gfx_sm500_rendering_octopus;
-        }
-        else {
-            device_blit = gw_gfx_sm500_rendering;
-        }
+		device_blit = gw_gfx_sm500_rendering;
 		return true;
 	}
 

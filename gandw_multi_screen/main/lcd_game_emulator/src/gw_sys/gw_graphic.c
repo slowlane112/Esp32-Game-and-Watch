@@ -416,6 +416,10 @@ void gw_gfx_init()
 	/* init LCD deflicker level */
 	// for emulated cpus side
 	flag_lcd_deflicker_level = (gw_head.flags & FLAG_LCD_DEFLICKER_MASK) >> 6;
+	
+	if (memcmp(gw_head.rom_signature, "w_opanic", 8) == 0) {
+		flag_lcd_deflicker_level = 2;
+	}	
 
 	// for segments rendering side
 	deflicker_enabled = (flag_lcd_deflicker_level != 0);

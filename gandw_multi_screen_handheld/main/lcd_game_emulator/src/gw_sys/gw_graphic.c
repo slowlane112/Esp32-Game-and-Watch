@@ -410,82 +410,6 @@ __attribute__((optimize("unroll-loops"))) inline void gw_gfx_sm500_rendering(uin
 		}
 	}
 }
-/* HACK SM500 I/O based LCD controller for Octopus*/
-__attribute__((optimize("unroll-loops"))) inline void gw_gfx_sm500_rendering_octopus(uint16 *framebuffer)
-{
-
-	uint8 seg_state;
-	uint8 seg_normal;
-    uint8 seg1;
-    uint8 seg2;
-    uint8 seg3;
-    uint8 seg4;
-
-	gw_graphic_framebuffer = framebuffer;
-
-	if (gw_head.flags & FLAG_RENDERING_LCD_INVERTED)
-	{
-
-		memset(framebuffer, 0, GW_SCREEN_WIDTH * GW_SCREEN_HEIGHT * 2);
-		SEG_TRANSPARENT_COLOR = SEG_BLACK_COLOR;
-		source_mixer = gw_background;
-	}
-	else
-	{
-		memcpy(framebuffer, gw_background, GW_SCREEN_WIDTH * GW_SCREEN_HEIGHT * 2);
-		SEG_TRANSPARENT_COLOR = SEG_WHITE_COLOR;
-		source_mixer = framebuffer;
-	}
-
-	// 2 columns z
-	for (int h = 0; h < 2; h++)
-	{
-		// number of W,W' output registers (m_o_pins= 7 or 9)
-		for (int o = 0; o < m_o_pins; o++)
-		{
-            seg_state = h ? m_ox_state[o] : m_o_state[o];
-            seg_normal = h ? m_ox[o] : m_o[o];
-
-            // 4 segments per group
-			// check if LCD deflicker is activated
-			if (deflicker_enabled) {
-                seg1 = seg_state;
-                seg2 = seg_state;
-                seg3 = seg_state;
-                seg4 = seg_state;
-            }
-			else {
-                seg1 = seg_normal;
-                seg2 = seg_normal;
-                seg3 = seg_normal;
-                seg4 = seg_normal;
-            }
-
-            if (h == 1 && o == 4 && seg_state == 5 && seg_normal == 7) { // 1  seg_no: 35
-                seg2 = 7;
-            }
-            else if (h == 1 && o == 3 && seg_state == 1 && seg_normal == 5) { // 2 seg_no: 29
-                seg3 = 5;
-            }
-            else if (h == 0 && o == 2 && seg_state == 12 && seg_normal == 13) { // 3 seg_no: 16
-                seg1 = 13;
-            }
-            else if (h == 0 && o == 1 && seg_state == 9 && seg_normal == 11) { //4 seg_no: 10
-                seg2 = 11;
-            }
-            else if (h == 0 && o == 0 && seg_state == 4 && seg_normal == 6) { //5 seg_no: 2
-                seg2 = 6;
-            }
-
-			// 8x+2y+z with x=o, y=2,4,6,8, z=h (72 segments max.)
-			update_segment(8 * o + 0 + h, m_bp ? ((seg1 & 0x1) != 0) : 0); // 0,1 8,9 16,17 24,25 32,33 40,41 48,49 56,57 64,65
-			update_segment(8 * o + 2 + h, m_bp ? ((seg2 & 0x2) != 0) : 0); // 2,3
-			update_segment(8 * o + 4 + h, m_bp ? ((seg3 & 0x4) != 0) : 0); // 4,5
-			update_segment(8 * o + 6 + h, m_bp ? ((seg4 & 0x8) != 0) : 0); // 6,7
-
-		}
-	}
-}
 void gw_gfx_init()
 {
 
@@ -493,13 +417,10 @@ void gw_gfx_init()
 	// for emulated cpus side
 	flag_lcd_deflicker_level = (gw_head.flags & FLAG_LCD_DEFLICKER_MASK) >> 6;
 
-    // fix for chef and Tropical Fish
-    if (memcmp(gw_head.rom_signature, "gnw_chef", 8) == 0) {
-        flag_lcd_deflicker_level = 1;
-    }
-    else if (memcmp(gw_head.rom_signature, "nw_tfish", 8) == 0) {
-        flag_lcd_deflicker_level = 0;
-    }
+    // fix for oil panic
+	if (memcmp(gw_head.rom_signature, "w_opanic", 8) == 0) {
+		flag_lcd_deflicker_level = 2;
+	}
 
 	// for segments rendering side
 	deflicker_enabled = (flag_lcd_deflicker_level != 0);

@@ -99,9 +99,9 @@ void sm510_op_atpl()
 
 void sm510_op_rtn0()
 {
-    // disabled due to segment glitching in oil panic
-	//if (flag_lcd_deflicker_level < 2)
-	//	sm510_update_segments_state();
+
+	if (flag_lcd_deflicker_level < 2)
+		sm510_update_segments_state();
 
 	// RTN0: return from subroutine
 	pop_stack();
