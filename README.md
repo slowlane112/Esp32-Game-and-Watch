@@ -49,3 +49,12 @@ https://github.com/slowlane112/Esp32-Game-and-Watch/tree/main/gandw_multi_screen
 </a>
 
 https://github.com/slowlane112/Esp32-Game-and-Watch/tree/main/gandw_single_screen_4button_handheld
+
+
+## CardPuter
+
+<a href="https://github.com/slowlane112/Esp32-Game-and-Watch/tree/main/gandw_cardputer">
+    <img src="assets/cardputer_1.jpg" alt="CardPuter" width="200">
+</a>
+
+https://github.com/slowlane112/Esp32-Game-and-Watch/tree/main/gandw_cardputer

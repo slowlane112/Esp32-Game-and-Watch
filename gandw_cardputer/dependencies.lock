@@ -1,0 +1,10 @@
+dependencies:
+  idf:
+    source:
+      type: idf
+    version: 5.4.1
+direct_dependencies:
+- idf
+manifest_hash: a7561d57b91bd30f534e93fc49b6abfaa887655cfc6ccef2c017531b71e5a72b
+target: esp32s3
+version: 2.0.0
