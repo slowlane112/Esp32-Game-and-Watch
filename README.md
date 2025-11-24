@@ -50,6 +50,13 @@ https://github.com/slowlane112/Esp32-Game-and-Watch/tree/main/gandw_multi_screen
 
 https://github.com/slowlane112/Esp32-Game-and-Watch/tree/main/gandw_single_screen_4button_handheld
 
+## Single Screen 4 Button Handheld with Menu
+
+<a href="https://github.com/slowlane112/Esp32-Game-and-Watch/tree/main/gandw_single_screen_4button_menu_handheld">
+    <img src="assets/4button_menu_handheld_1.jpg" alt="Single Screen 4 Button Handheld with Menu" width="200">
+</a>
+
+https://github.com/slowlane112/Esp32-Game-and-Watch/tree/main/gandw_single_screen_4button_menu_handheld
 
 ## CardPuter
 
