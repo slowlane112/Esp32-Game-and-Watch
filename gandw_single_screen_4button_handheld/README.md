@@ -14,6 +14,7 @@ Use the information provided in this project at your own risk.
 <table>
 <tr><td colspan="2"><img src="../assets/4button_handheld_1.jpg" alt="4 Button Handheld" width="800"></td></tr>
 <tr><td colspan="2"><img src="../assets/4button_handheld_2.jpg" alt="4 Button Handheld" width="800"></td></tr>
+<tr><td colspan="2"><img src="../assets/4button_menu_handheld_1.jpg" alt="4 Button Handheld" width="800"></td></tr>
 <tr>
     <td><img src="../assets/4button_handheld_3.jpg" alt="4 Button Handheld" width="400"></td>
     <td><img src="../assets/4button_handheld_4.jpg" alt="4 Button Handheld" width="400"></td>
@@ -27,15 +28,15 @@ Use the information provided in this project at your own risk.
 
 # Features
 
-## 10 Games
-Plays 10 four button game and watch games. 
-Use button combinations on power up to select the game (See source code).
-Remembers last game selected if no buttons pressed on power up.
+## 22 Games
+Plays 22 two and four button game and watch games.<br>
+Use the left and right buttons in the menu to select a game, then press Game A to start the game.<br>
+You can return to the menu by pressing the left and right buttons for a few seconds.
 
 ## Volume Adjustment
-Volume adjustment with on screen display.
-Volume down: Time and Left buttons.
-Volume up: Time and Right buttons.
+Volume adjustment with on screen display.<br>
+Volume down: Time and Left buttons.<br>
+Volume up: Time and Right buttons.<br>
 Remembers volume level on power up.
 
 ## Power
@@ -161,7 +162,7 @@ The diagrams below show how to mount the buttons:
 
 # Roms
 
-The roms must be in .gw format. See the CMakeLists.txt file in the main directory for the list of rom files required.
+The roms must be in .gw format.
 
 These can be created using LCD-Game-Shrinker.
 
@@ -171,18 +172,47 @@ Below is a link to a guide describing how to use LCD-Game-Shrinker to generate t
 
 https://gist.github.com/DNA64/16fed499d6bd4664b78b4c0a9638e4ef
 
+Below is a list of the gw files required:
+
+<table cellpadding="2" cellspacing="0">
+<tr><td>Mame Rom</td><td>GW File</td></tr>
+<tr><td>gnw_pchute</td><td>Game & Watch Parachute.gw</td></tr>
+<tr><td>gnw_octopus</td><td>Game & Watch Octopus.gw</td></tr>
+<tr><td>gnw_fire</td><td>Game & Watch Fire (Wide Screen).gw</td></tr>
+<tr><td>gnw_chef</td><td>Game & Watch Chef.gw</td></tr>
+<tr><td>gnw_popeye</td><td>Game & Watch Popeye (Wide Screen).gw</td></tr>
+<tr><td>gnw_tbridge</td><td>Game & Watch Turtle Bridge.gw</td></tr>
+<tr><td>gnw_vermin</td><td>Game & Watch Vermin.gw</td></tr>
+<tr><td>gnw_ball</td><td>Game & Watch Ball.gw</td></tr>
+<tr><td>gnw_fires</td><td>Game & Watch Fire (Silver).gw</td></tr>
+<tr><td>gnw_helmet</td><td>Game & Watch Helmet (CN-17 version).gw</td></tr>
+<tr><td>gnw_mariotj</td><td>Game & Watch Mario The Juggler.gw</td></tr>
+<tr><td>gnw_tfish</td><td>Game & Watch Tropical Fish.gw</td></tr>
+<tr><td>gnw_egg</td><td>Game & Watch Egg.gw</td></tr>
+<tr><td>gnw_fireatk</td><td>Game & Watch Fire Attack.gw</td></tr>
+<tr><td>gnw_flagman</td><td>Game & Watch Flagman.gw</td></tr>
+<tr><td>gnw_judge</td><td>Game & Watch Judge (green version).gw</td></tr>
+<tr><td>gnw_lion</td><td>Game & Watch Lion.gw</td></tr>
+<tr><td>gnw_manhole</td><td>Game & Watch Manhole (New Wide Screen).gw</td></tr>
+<tr><td>gnw_manholeg</td><td>Game & Watch Manhole (Gold).gw</td></tr>
+<tr><td>gnw_mariocm</td><td>Game & Watch Mario's Cement Factory (New Wide Screen).gw</td></tr>
+<tr><td>gnw_mmouse</td><td>Game & Watch Mickey Mouse (Wide Screen).gw</td></tr>
+<tr><td>gnw_stennis</td><td>Game & Watch Snoopy Tennis.gw</td></tr>
+</table>
+
+
 
 # Building
-Install the ESP-IDF framework. Current version is v5.4.1
+Install the ESP-IDF framework. The version I used was v5.4.1, but it should also work with newer versions.
 https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/get-started/index.html
 
 Make sure you can build the hello_world example project.
 
 Download the code from this repo.
 
-Use LCD-Game-Shrinker to generate a rom files. Rename the rom files to how they are specified in the CMakeLists.txt file, and place them in the /gandw_single_screen_handheld/main/ directory.
+Use LCD-Game-Shrinker to generate a game files (see above) and place the gw files in the /gandw_single_screen_4button_handheld/main/ directory.
 
-Go back to /gandw_single_screen_handheld/ directory and open the terminal or cmd window in this directory.
+Go back to /gandw_single_screen_4button_handheld/ directory and open the terminal or cmd window in this directory.
 
 ## Linux
 These instructions are for linux. If you are using windows follow the same steps you did when building the hello_world example project.
@@ -232,23 +262,14 @@ All the ILI9341 lcd panels i used required the pixel data to be byte swapped for
 
 I have swapped the byte order for the background and segment pixel data in lcd game emulator.
 
-If the image displayed on your screen looks incorrect (wrong colours) you can remove the byte swap code.
+If the image displayed on your screen looks incorrect (wrong colours) you can change the byte swap setting.
 
-In the file: /main/lcd_game_emulator/src/gw_sys/gw_romloader.c, comment or remove the byte swap for loop.
+In the file: /main/lcd_game_emulator/src/gw_sys/gw_system.h, set BYTE_SWAP to 0.
 
 ```
-    gw_background = (unsigned short *)&GW_ROM[gw_head.background_pixel];
-
-    // Byte swap background
-    /* for (int i = 0; i < GW_SCREEN_HEIGHT * GW_SCREEN_WIDTH; i++) {
-        gw_background[i] = (gw_background[i] >> 8) | (gw_background[i] << 8);
-    } */
+#define BYTE_SWAP 0
 ```
-In the file: /main/lcd_game_emulator/src/gw_sys/gw_graphic.c:
 
-Look for the rgb_multiply_8bits function.
-
-Comment the byte swap version and uncomment the non byte swap version.
 
 # Acknowledgements
 

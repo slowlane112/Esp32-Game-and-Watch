@@ -540,6 +540,14 @@ unsigned char gw_readK(unsigned char io_S)
                             io_K |= 0x8;
                         }
                     }
+                    else if ((gw_keyboard[Sx] & GW_MASK_K2) == 32768 && (gw_keyboard[Sx] & GW_MASK_K3) == 0) {
+						if (key_soft_value == KEY_SOFT_TIME) {
+                            io_K |= 0x3;
+                        }
+                        else if (key_soft_value == KEY_SOFT_ALARM) {
+                            io_K |= 0x6;
+                        }
+					}
 				}
 
 				// check hardware keys excluding soft keys

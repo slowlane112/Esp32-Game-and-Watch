@@ -1,5 +1,4 @@
-# Description
-Game and Watch for the CardPuter.
+# Game and Watch for the CardPuter.
 
 I developed it using the Cardputer v1.1. You might need to make some changes to get it to work on the other versions.
 
@@ -14,11 +13,10 @@ I developed it using the Cardputer v1.1. You might need to make some changes to 
 
 # Games
 
-Supports 26 single screen Game and Watch games.
+Supports 26 single screen Game and Watch games.<br>
+Use the left and right arrow keys in the menu to select a game, then press Ok to start the game.<br>
+You can return to the menu by pressing reset.
 
-To select a game hold the games boot key on power up (see list below).
-
-Remembers the last game selected if no buttons pressed on power up.
 
 # Buttons
 
@@ -80,6 +78,20 @@ Remembers the last game selected if no buttons pressed on power up.
 </tr>
 </table>
 
+Mario's Cement Factory
+
+<table>
+<tr>
+    <td>Left</td><td>ctrl</td>
+</tr>
+<tr>
+    <td>Right</td><td>opt</td>
+</tr>
+<tr>
+    <td>Open</td><td>space</td>
+</tr>
+</table>
+
 
 ## Directional Button Games
 
@@ -128,35 +140,34 @@ gw_height=135
 Below is a list of the gw files required:
 
 <table cellpadding="2" cellspacing="0">
-<tr><td>Mame Rom</td><td>Boot Key</td><td>GW File</td></tr>
-<tr><td>gnw_pchute</td><td>1</td><td>Game & Watch Parachute.gw</td></tr>
-<tr><td>gnw_octopus</td><td>2</td><td>Game & Watch Octopus.gw</td></tr>
-<tr><td>gnw_fire</td><td>3</td><td>Game & Watch Fire (Wide Screen).gw</td></tr>
-<tr><td>gnw_chef</td><td>4</td><td>Game & Watch Chef.gw</td></tr>
-<tr><td>gnw_popeye</td><td>5</td><td>Game & Watch Popeye (Wide Screen).gw</td></tr>
-<tr><td>gnw_tbridge</td><td>6</td><td>Game & Watch Turtle Bridge.gw</td></tr>
-<tr><td>gnw_vermin</td><td>7</td><td>Game & Watch Vermin.gw</td></tr>
-<tr><td>gnw_ball</td><td>8</td><td>Game & Watch Ball.gw</td></tr>
-<tr><td>gnw_fires</td><td>9</td><td>Game & Watch Fire (Silver).gw</td></tr>
-<tr><td>gnw_helmet</td><td>0</td><td>Game & Watch Helmet (CN-17 version).gw</td></tr>
-<tr><td>gnw_mariotj</td><td>Q</td><td>Game & Watch Mario The Juggler.gw</td></tr>
-<tr><td>gnw_tfish</td><td>W</td><td>Game & Watch Tropical Fish.gw</td></tr>
-<tr><td>gnw_egg</td><td>E</td><td>Game & Watch Egg.gw</td></tr>
-<tr><td>gnw_fireatk</td><td>R</td><td>Game & Watch Fire Attack.gw</td></tr>
-<tr><td>gnw_flagman</td><td>T</td><td>Game & Watch Flagman.gw</td></tr>
-<tr><td>gnw_judge</td><td>Y</td><td>Game & Watch Judge (green version).gw</td></tr>
-<tr><td>gnw_lion</td><td>U</td><td>Game & Watch Lion.gw</td></tr>
-<tr><td>gnw_manhole</td><td>I</td><td>Game & Watch Manhole (New Wide Screen).gw</td></tr>
-<tr><td>gnw_manholeg</td><td>O</td><td>Game & Watch Manhole (Gold).gw</td></tr>
-<tr><td>gnw_mariocm</td><td>P</td><td>Game & Watch Mario's Cement Factory (New Wide Screen).gw</td></tr>
-<tr><td>gnw_mmouse</td><td>A</td><td>Game & Watch Mickey Mouse (Wide Screen).gw</td></tr>
-<tr><td>gnw_stennis</td><td>S</td><td>Game & Watch Snoopy Tennis.gw</td></tr>
-<tr><td>gnw_dkjr</td><td>D</td><td>Game & Watch Donkey Kong Jr. (New Wide Screen).gw</td></tr>
-<tr><td>gnw_bfight</td><td>F</td><td>Game & Watch Balloon Fight (Crystal Screen).gw</td></tr>
-<tr><td>gnw_climber</td><td>G</td><td>Game & Watch Climber (Crystal Screen).gw</td></tr>
-<tr><td>gnw_smb</td><td>H</td><td>Game & Watch Super Mario Bros. (Crystal Screen).gw</td></tr>
+<tr><td>Mame Rom</td><td>GW File</td></tr>
+<tr><td>gnw_pchute</td><td>Game & Watch Parachute.gw</td></tr>
+<tr><td>gnw_octopus</td><td>Game & Watch Octopus.gw</td></tr>
+<tr><td>gnw_fire</td><td>Game & Watch Fire (Wide Screen).gw</td></tr>
+<tr><td>gnw_chef</td><td>Game & Watch Chef.gw</td></tr>
+<tr><td>gnw_popeye</td><td>Game & Watch Popeye (Wide Screen).gw</td></tr>
+<tr><td>gnw_tbridge</td><td>Game & Watch Turtle Bridge.gw</td></tr>
+<tr><td>gnw_vermin</td><td>Game & Watch Vermin.gw</td></tr>
+<tr><td>gnw_ball</td><td>Game & Watch Ball.gw</td></tr>
+<tr><td>gnw_fires</td><td>Game & Watch Fire (Silver).gw</td></tr>
+<tr><td>gnw_helmet</td><td>Game & Watch Helmet (CN-17 version).gw</td></tr>
+<tr><td>gnw_mariotj</td><td>Game & Watch Mario The Juggler.gw</td></tr>
+<tr><td>gnw_tfish</td><td>Game & Watch Tropical Fish.gw</td></tr>
+<tr><td>gnw_egg</td><td>Game & Watch Egg.gw</td></tr>
+<tr><td>gnw_fireatk</td><td>Game & Watch Fire Attack.gw</td></tr>
+<tr><td>gnw_flagman</td><td>Game & Watch Flagman.gw</td></tr>
+<tr><td>gnw_judge</td><td>Game & Watch Judge (green version).gw</td></tr>
+<tr><td>gnw_lion</td><td>Game & Watch Lion.gw</td></tr>
+<tr><td>gnw_manhole</td><td>Game & Watch Manhole (New Wide Screen).gw</td></tr>
+<tr><td>gnw_manholeg</td><td>Game & Watch Manhole (Gold).gw</td></tr>
+<tr><td>gnw_mariocm</td><td>Game & Watch Mario's Cement Factory (New Wide Screen).gw</td></tr>
+<tr><td>gnw_mmouse</td><td>Game & Watch Mickey Mouse (Wide Screen).gw</td></tr>
+<tr><td>gnw_stennis</td><td>Game & Watch Snoopy Tennis.gw</td></tr>
+<tr><td>gnw_dkjr</td><td>Game & Watch Donkey Kong Jr. (New Wide Screen).gw</td></tr>
+<tr><td>gnw_bfightn</td><td>Game & Watch Balloon Fight (New Wide Screen).gw</td></tr>
+<tr><td>gnw_climbern</td><td>Game & Watch Climber (New Wide Screen).gw</td></tr>
+<tr><td>gnw_smbn</td><td>Game & Watch Super Mario Bros. (New Wide Screen).gw</td></tr>
 </table>
-
 
 Below is a link to a guide describing how to use LCD-Game-Shrinker to generate the files.
 

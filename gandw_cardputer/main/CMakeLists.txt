@@ -1,6 +1,7 @@
 idf_component_register(SRC_DIRS "." "lcd_game_emulator/src" "lcd_game_emulator/src/cpus" "lcd_game_emulator/src/gw_sys"
                        INCLUDE_DIRS "." "lcd_game_emulator/src" "lcd_game_emulator/src/cpus" "lcd_game_emulator/src/gw_sys"
-                       EMBED_FILES  
+                       EMBED_FILES
+                        "menu.raw"  
 						"Game & Watch Ball.gw"
 						"Game & Watch Chef.gw"
 						"Game & Watch Egg.gw"
@@ -24,8 +25,8 @@ idf_component_register(SRC_DIRS "." "lcd_game_emulator/src" "lcd_game_emulator/s
 						"Game & Watch Turtle Bridge.gw"
 						"Game & Watch Vermin.gw"
                         "Game & Watch Donkey Kong Jr. (New Wide Screen).gw"
-                        "Game & Watch Balloon Fight (Crystal Screen).gw"
-                        "Game & Watch Climber (Crystal Screen).gw"
-                        "Game & Watch Super Mario Bros. (Crystal Screen).gw"
+                        "Game & Watch Balloon Fight (New Wide Screen).gw"
+                        "Game & Watch Climber (New Wide Screen).gw"
+                        "Game & Watch Super Mario Bros. (New Wide Screen).gw"
 ) 
 

@@ -25,6 +25,7 @@ __license__ = "GPLv3"
 
 #define GW_SCREEN_WIDTH 240
 #define GW_SCREEN_HEIGHT 135
+#define BYTE_SWAP 1
 
 
 /* refresh rate 128Hz */

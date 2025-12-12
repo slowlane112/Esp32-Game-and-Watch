@@ -158,7 +158,7 @@ void sm500_op_trs()
 		// E flag was set?
 		if ((m_prev_op & 0xf0) == 0x70) {
 			do_branch(m_cb, su, m_pc & 0x3f);
-			// added to fix octopus
+			// added to fix some flag_lcd_deflicker_level 2 games
 			if (flag_lcd_deflicker_level == 3) {
 				sm500_update_segments_state();
 			}

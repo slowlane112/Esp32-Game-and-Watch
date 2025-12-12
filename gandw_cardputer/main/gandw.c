@@ -1,19 +1,17 @@
-#include <stdio.h>
 #include <gw_system.h>
 #include "driver/gpio.h"
-#include "esp_heap_caps.h"
 #include "esp_lcd_panel_io.h"
 #include "esp_lcd_panel_ops.h"
 #include "esp_lcd_panel_vendor.h"
-#include "esp_err.h"
-#include "esp_log.h"
-#include "driver/i2s_std.h"
+#include "freertos/task.h"
+#include "esp_timer.h"
 #include "nvs_flash.h"
-#include "gandw_buttons.h"
-#include "gandw_keyboard.h"
-#include "gandw_games.h"
-#include "gandw_volume.h"
-#include "gandw_battery.h"
+#include "button.h"
+#include "keyboard.h"
+#include "game.h"
+#include "volume.h"
+#include "battery.h"
+#include "menu.h"
 
 
 // LCD
@@ -34,7 +32,7 @@
 #define AUD_I2S_WS          43
 #define AUD_I2S_DATA        42
 
-
+i2s_chan_handle_t i2s_audio_handle;
 volatile bool lcd_transfer_in_progress = false;
 
 static bool on_color_trans_done(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel_io_event_data_t *event_data, void *user_ctx) {
@@ -44,45 +42,40 @@ static bool on_color_trans_done(esp_lcd_panel_io_handle_t panel_io, esp_lcd_pane
 
 unsigned int gw_get_buttons()
 {
-	
     uint32_t hw_buttons = 0;
-
-    if (start_delay == 0) {
-	
-		char key = get_key();
-		
-		if (key == ';') { 
-			set_volume(true); // volume up
+    
+    char key = keyboard_get_key();
+    
+    if (key == ';') { 
+		volume_set(true); // volume up
+	}
+	else if (key == '.') { 
+		volume_set(false); // volume down
+	}
+	else {
+    
+		if (button_control_type == 4) {
+			hw_buttons = button_get_four_buttons(key);
 		}
-		else if (key == '.') { 
-			set_volume(false); // volume down
+		else if (button_control_type == 5) {
+			hw_buttons = button_get_five_buttons(key);
 		}
 		else {
-		
-			if (control_button_type == 4) {
-				hw_buttons = gw_get_four_buttons(key);
-			}
-			else if (control_button_type == 5) {
-				hw_buttons = gw_get_five_buttons(key);
-			}
-			else {
-				hw_buttons = gw_get_two_buttons(key);
-			}
-			
+			hw_buttons = button_get_two_buttons(key);
 		}
-
-    }
+		
+	}
 
     return hw_buttons;
 }
 
 i2s_chan_handle_t setup_audio_i2s() {
 
-    i2s_chan_handle_t i2s_audio_handle;
+    i2s_chan_handle_t new_i2s_audio_handle;
     
     i2s_chan_config_t chan_cfg = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_0, I2S_ROLE_MASTER);
 
-    ESP_ERROR_CHECK(i2s_new_channel(&chan_cfg, &i2s_audio_handle, NULL));
+    ESP_ERROR_CHECK(i2s_new_channel(&chan_cfg, &new_i2s_audio_handle, NULL));
 
     i2s_std_config_t i2s_config = {
         .clk_cfg  = I2S_STD_CLK_DEFAULT_CONFIG(GW_SYS_FREQ),
@@ -96,10 +89,10 @@ i2s_chan_handle_t setup_audio_i2s() {
         }
     };
 
-    ESP_ERROR_CHECK(i2s_channel_init_std_mode(i2s_audio_handle, &i2s_config));
-    ESP_ERROR_CHECK(i2s_channel_enable(i2s_audio_handle));
+    ESP_ERROR_CHECK(i2s_channel_init_std_mode(new_i2s_audio_handle, &i2s_config));
+    ESP_ERROR_CHECK(i2s_channel_enable(new_i2s_audio_handle));
 
-    return i2s_audio_handle;
+    return new_i2s_audio_handle;
 
 }
 
@@ -161,15 +154,74 @@ esp_lcd_panel_handle_t setup_lcd_spi() {
     return spi_lcd_handle;    
 }
 
+uint8_t read_selected_game() {
+    uint8_t selected_game = 0;
+    nvs_handle_t my_handle;
+    ESP_ERROR_CHECK(nvs_open("gandw", NVS_READWRITE, &my_handle));
+    nvs_get_u8(my_handle, "selected_game", &selected_game);
+    nvs_close(my_handle);
+
+    if (selected_game > game_count - 1) {
+        selected_game = 0;
+    }
+
+    return selected_game;
+}
+
+void save_selected_game(uint8_t selected_game) {
+    nvs_handle_t my_handle;
+    ESP_ERROR_CHECK(nvs_open("gandw", NVS_READWRITE, &my_handle));
+    ESP_ERROR_CHECK(nvs_set_u8(my_handle, "selected_game", selected_game));
+    ESP_ERROR_CHECK(nvs_commit(my_handle));
+    nvs_close(my_handle);
+}
+
+void set_menu(bool is_up) {
+
+    uint32_t current_time = esp_timer_get_time() / 1000;
+
+    if (current_time - menu_time > 200) {
+        if (is_up) {
+            if (menu_index < game_count - 1) {
+                menu_index++;
+            }
+        }
+        else {
+            if (menu_index > 0) {
+                menu_index--;
+            }
+        }
+
+        menu_time = current_time;
+		menu_update = true;
+    }
+}
+
+void check_menu_buttons()
+{
+	char key = keyboard_get_key();
+	uint8_t menu_button = button_get_menu_buttons(key);
+    if (menu_button == 1) { 
+        set_menu(true);
+    }
+    else if (menu_button == 2) {
+        set_menu(false);
+    }
+    else if (menu_button == 3) {
+		save_selected_game(menu_index);
+        menu_show = false;
+    }
+}
+
 void display_volume_battery(unsigned short *framebuffer)
 {
 
     if (volume_display_count > 0) {
-        display_volume(framebuffer);
+        volume_display(framebuffer);
     }
 
     if (battery_display_count > 0) {
-        display_battery(framebuffer);
+        battery_display(framebuffer);
     }
 
 }
@@ -184,14 +236,14 @@ void app_main(void)
     uint16_t audio_buffer[GW_AUDIO_BUFFER_LENGTH];
 
     // sound
-    i2s_chan_handle_t i2s_audio_handle = setup_audio_i2s();
+    i2s_audio_handle = setup_audio_i2s();
 
     // screen
     esp_lcd_panel_handle_t spi_lcd_handle = setup_lcd_spi();
 
 
     // keyboard
-    setup_keyboard();
+    keyboard_setup();
 
 
     // flash
@@ -201,65 +253,109 @@ void app_main(void)
         ESP_ERROR_CHECK(nvs_flash_erase());
         ESP_ERROR_CHECK(nvs_flash_init());
     }
+    
+    
+    volume_read();
 
-    read_volume();
+    battery_get_level();
+    
+	menu_index = read_selected_game();
 
-    get_battery_level();
+	menu_update = true;
+	
+	while (menu_show) {
+		
+		check_menu_buttons();
+		
+		if (volume_display_count > 0) {
+			volume_display_count--;
+			if (volume_display_count == 0) {
+				menu_update = true;
+			}
+		}
 
-    // Load ROM
-    load_game();
+		if (battery_display_count > 0) {
+			battery_display_count--;
+			if (battery_display_count == 0) {
+				menu_update = true;
+			}
+		}
+		
+		if (button_start_delay > 0) {
+			button_start_delay--;
+		}
+			
+		if (menu_update && !lcd_transfer_in_progress) {
+			
+			menu_display_item(framebuffer, menu_index);
+			
+			if (volume_display_count > 0 || battery_display_count > 0) {
+				display_volume_battery(framebuffer);
+			}
+	
+			esp_lcd_panel_draw_bitmap(spi_lcd_handle, 0, 0, GW_SCREEN_WIDTH, GW_SCREEN_HEIGHT, framebuffer);
+			
+			menu_update = false;
+			
+		}
+		
+		vTaskDelay(pdMS_TO_TICKS(10)); 
+		
+	}
+	
+	game_load(menu_index);
 
-    gw_system_romload();
+	gw_system_romload();
 
-    gw_system_sound_init();
-    gw_system_config();
-    gw_system_start();
-    gw_system_reset();
+	gw_system_sound_init();
+	gw_system_config();
+	gw_system_start();
+	gw_system_reset();
+	
+	while (true) {
 
-    while (true) {
+		if (volume_display_count > 0) {
+			volume_display_count--;
+		}
 
-        if (volume_display_count > 0) {
-            volume_display_count--;
-        }
+		if (battery_display_count > 0) {
+			battery_display_count--;
+		}
+		
+		if (button_start_delay > 0) {
+			button_start_delay--;
+		}
 
-        if (battery_display_count > 0) {
-            battery_display_count--;
-        }
+		gw_system_run(GW_SYSTEM_CYCLES);
 
-        if (start_delay > 0) {
-            start_delay--;
-        }
+		// lcd
+		if (!lcd_transfer_in_progress) {
 
-        gw_system_run(GW_SYSTEM_CYCLES);
+			lcd_transfer_in_progress = true;
 
-        // lcd
-        if (!lcd_transfer_in_progress) {
+			gw_system_blit(framebuffer);
 
-            lcd_transfer_in_progress = true;
+			if (volume_display_count > 0 || battery_display_count > 0) {
+				display_volume_battery(framebuffer);
+			}
 
-            gw_system_blit(framebuffer);
+			esp_lcd_panel_draw_bitmap(spi_lcd_handle, 0, 0, GW_SCREEN_WIDTH, GW_SCREEN_HEIGHT, framebuffer);
+		}
 
-            if (volume_display_count > 0 || battery_display_count > 0) {
-                display_volume_battery(framebuffer);
-            }
+		// audio
+		for (size_t i = 0; i < GW_AUDIO_BUFFER_LENGTH; i++)
+		{
+			audio_buffer[i] = (gw_audio_buffer[i] > 0) ? volume : 0;
+		}
 
-            esp_lcd_panel_draw_bitmap(spi_lcd_handle, 0, 0, GW_SCREEN_WIDTH, GW_SCREEN_HEIGHT, framebuffer);
-        }
+		size_t bytes_written;
 
-        // audio
-        for (size_t i = 0; i < GW_AUDIO_BUFFER_LENGTH; i++)
-        {
-            audio_buffer[i] = (gw_audio_buffer[i] > 0) ? volume : 0;
-        }
+		i2s_channel_write(i2s_audio_handle, audio_buffer, sizeof(audio_buffer), &bytes_written, portMAX_DELAY);
 
-        size_t bytes_written;
-
-        i2s_channel_write(i2s_audio_handle, audio_buffer, sizeof(audio_buffer), &bytes_written, portMAX_DELAY);
-
-        gw_audio_buffer_copied = true;
-
-    }
-
+		gw_audio_buffer_copied = true;
+		
+   } 
+    
 }
 
 

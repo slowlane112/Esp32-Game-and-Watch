@@ -60,9 +60,9 @@ static inline uint16_t __internal_bswap16(uint16_t val) {
   sg: segment is 8bits Green of RGB565 16 pixel format
 */
 
-/* Non byte swap segment rgb_multiply_8bits */
 
-/*static inline uint16 rgb_multiply_8bits(uint32 bg, uint32 sg)
+/* Non byte swap segment rgb_multiply_8bits */
+static inline uint16 rgb_multiply_8bits_non_byte_swap(uint32 bg, uint32 sg)
 {
 
 	// Separate each colors
@@ -77,13 +77,13 @@ static inline uint16_t __internal_bswap16(uint16_t val) {
 
 	// return in RGB565 format
 	return (uint16)(bg_r << 11) | (bg_g << 5) | bg_b;
-}*/
+}
 
 
 
 /* Byte swap segment rgb_multiply_8bits */
 
-static inline uint16_t rgb_multiply_8bits(uint32_t bg, uint32_t sg)
+static inline uint16_t rgb_multiply_8bits_byte_swap(uint32_t bg, uint32_t sg)
 {
 
     // swap bg back
@@ -105,6 +105,17 @@ static inline uint16_t rgb_multiply_8bits(uint32_t bg, uint32_t sg)
                                (bg_b << 3) |          // Blue (5 bits)
                                ((bg_g & 0x38) >> 3);  // Lower 3 bits of green
 
+}
+
+
+static inline uint16 rgb_multiply_8bits(uint32 bg, uint32 sg)
+{
+	if (BYTE_SWAP) {
+		return rgb_multiply_8bits_byte_swap(bg, sg);
+	}
+	
+	return rgb_multiply_8bits_non_byte_swap(bg, sg);
+	
 }
 
 
@@ -417,8 +428,7 @@ void gw_gfx_init()
 	// for emulated cpus side
 	flag_lcd_deflicker_level = (gw_head.flags & FLAG_LCD_DEFLICKER_MASK) >> 6;
 
-
-    // fix for chef and Tropical Fish and Flagman - printf("%s\n", gw_head.rom_signature);
+    // fix for chef and Tropical Fish and Flagman - printf("[%.8s]\n", gw_head.rom_signature);
     if (memcmp(gw_head.rom_signature, "gnw_chef", 8) == 0) {
         flag_lcd_deflicker_level = 1;
     }
@@ -428,8 +438,21 @@ void gw_gfx_init()
     else if (memcmp(gw_head.rom_signature, "_flagman", 8) == 0) {
         flag_lcd_deflicker_level = 1;
     }
-
-
+    else if (memcmp(gw_head.rom_signature, "_octopus", 8) == 0
+				|| memcmp(gw_head.rom_signature, "gnw_ball", 8) == 0
+				|| memcmp(gw_head.rom_signature, "nw_judge", 8) == 0
+				|| memcmp(gw_head.rom_signature, "manholeg", 8) == 0
+				|| memcmp(gw_head.rom_signature, "w_helmet", 8) == 0
+				|| memcmp(gw_head.rom_signature, "gnw_lion", 8) == 0
+				|| memcmp(gw_head.rom_signature, "w_pchute", 8) == 0
+				|| memcmp(gw_head.rom_signature, "w_mmouse", 8) == 0
+				|| memcmp(gw_head.rom_signature, " gnw_egg", 8) == 0
+				|| memcmp(gw_head.rom_signature, "gnw_fire", 8) == 0
+    
+    ) {
+		// hack for some games to update segments in sm500_op_trs subroutine
+		flag_lcd_deflicker_level = 3;
+	}
 
 	// for segments rendering side
 	deflicker_enabled = (flag_lcd_deflicker_level != 0);

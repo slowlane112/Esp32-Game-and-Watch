@@ -417,7 +417,7 @@ void gw_gfx_init()
 	// for emulated cpus side
 	flag_lcd_deflicker_level = (gw_head.flags & FLAG_LCD_DEFLICKER_MASK) >> 6;
 	
-	// fix for chef and Tropical Fish and Flagman - printf("%s\n", gw_head.rom_signature);
+	 // fix for chef and Tropical Fish and Flagman - printf("[%.8s]\n", gw_head.rom_signature);
     if (memcmp(gw_head.rom_signature, "gnw_chef", 8) == 0) {
         flag_lcd_deflicker_level = 1;
     }
@@ -427,8 +427,19 @@ void gw_gfx_init()
     else if (memcmp(gw_head.rom_signature, "_flagman", 8) == 0) {
         flag_lcd_deflicker_level = 1;
     }
-    else if (memcmp(gw_head.rom_signature, "_octopus", 8) == 0) {
-		// hack for octopus will update segments in sm500_op_trs subroutine
+    else if (memcmp(gw_head.rom_signature, "_octopus", 8) == 0
+				|| memcmp(gw_head.rom_signature, "gnw_ball", 8) == 0
+				|| memcmp(gw_head.rom_signature, "nw_judge", 8) == 0
+				|| memcmp(gw_head.rom_signature, "manholeg", 8) == 0
+				|| memcmp(gw_head.rom_signature, "w_helmet", 8) == 0
+				|| memcmp(gw_head.rom_signature, "gnw_lion", 8) == 0
+				|| memcmp(gw_head.rom_signature, "w_pchute", 8) == 0
+				|| memcmp(gw_head.rom_signature, "w_mmouse", 8) == 0
+				|| memcmp(gw_head.rom_signature, " gnw_egg", 8) == 0
+				|| memcmp(gw_head.rom_signature, "gnw_fire", 8) == 0
+    
+    ) {
+		// hack for some games to update segments in sm500_op_trs subroutine
 		flag_lcd_deflicker_level = 3;
 	}
 

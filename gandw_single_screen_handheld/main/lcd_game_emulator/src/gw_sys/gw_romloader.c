@@ -270,8 +270,10 @@ bool gw_romloader_rom2ram()
       gw_background = (unsigned short *)&GW_ROM[gw_head.background_pixel];
 
       // Byte swap background
-      for (int i = 0; i < GW_SCREEN_HEIGHT * GW_SCREEN_WIDTH; i++) {
-        gw_background[i] = (gw_background[i] >> 8) | (gw_background[i] << 8);
+      if (BYTE_SWAP) {
+		  for (int i = 0; i < GW_SCREEN_HEIGHT * GW_SCREEN_WIDTH; i++) {
+			gw_background[i] = (gw_background[i] >> 8) | (gw_background[i] << 8);
+		  }
       }
 
       (void)rom_size_compressed_src; // unused

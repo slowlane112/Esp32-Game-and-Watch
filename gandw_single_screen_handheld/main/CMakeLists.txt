@@ -1,4 +1,17 @@
 idf_component_register(SRC_DIRS "." "lcd_game_emulator/src" "lcd_game_emulator/src/cpus" "lcd_game_emulator/src/gw_sys"
                        INCLUDE_DIRS "." "lcd_game_emulator/src" "lcd_game_emulator/src/cpus" "lcd_game_emulator/src/gw_sys"
-                       EMBED_FILES  gnwparachute.gw gnwoctopus.gw gnwpopeye.gw gnwchef.gw gnwfire.gw gnwturtlebridge.gw gnwvermin.gw gnwball.gw gnwfiresilver.gw gnwhelmet.gw gnwmariothejuggler.gw gnwtropicalfish.gw
+                       EMBED_FILES
+                        "menu.raw"
+						"Game & Watch Ball.gw"
+						"Game & Watch Vermin.gw"						
+						"Game & Watch Fire (Silver).gw"						
+						"Game & Watch Helmet (CN-17 version).gw"
+						"Game & Watch Parachute.gw"						
+						"Game & Watch Octopus.gw"												
+						"Game & Watch Popeye (Wide Screen).gw"
+						"Game & Watch Chef.gw"						
+						"Game & Watch Fire (Wide Screen).gw"
+						"Game & Watch Turtle Bridge.gw"						
+						"Game & Watch Tropical Fish.gw"
+						"Game & Watch Mario The Juggler.gw"						
 ) 
