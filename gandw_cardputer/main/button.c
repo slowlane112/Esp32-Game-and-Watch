@@ -4,12 +4,12 @@
 #include "button.h"
 #include "volume.h"
 #include "menu.h"
+#include "audio.h"
 
 uint8_t button_control_type = 2;
 uint8_t button_control_mode = 0;
 uint8_t button_start_delay = 63;
 uint8_t button_reset_count = 0;
-extern i2s_chan_handle_t i2s_audio_handle;
 
 uint8_t button_get_menu_buttons(char key)
 {

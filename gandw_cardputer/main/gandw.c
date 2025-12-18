@@ -3,7 +3,6 @@
 #include "esp_lcd_panel_io.h"
 #include "esp_lcd_panel_ops.h"
 #include "esp_lcd_panel_vendor.h"
-#include "freertos/task.h"
 #include "esp_timer.h"
 #include "nvs_flash.h"
 #include "button.h"
@@ -12,7 +11,8 @@
 #include "volume.h"
 #include "battery.h"
 #include "menu.h"
-
+#include "audio.h"
+#include "i2c.h"
 
 // LCD
 #define LCD_PIXEL_CLOCK_HZ  (80 * 1000 * 1000)
@@ -27,12 +27,6 @@
 #define LCD_BLK     		38
 #define LCD_MISO    		-1
 
-// audio
-#define AUD_I2S_BCK         41
-#define AUD_I2S_WS          43
-#define AUD_I2S_DATA        42
-
-i2s_chan_handle_t i2s_audio_handle;
 volatile bool lcd_transfer_in_progress = false;
 
 static bool on_color_trans_done(esp_lcd_panel_io_handle_t panel_io, esp_lcd_panel_io_event_data_t *event_data, void *user_ctx) {
@@ -67,33 +61,6 @@ unsigned int gw_get_buttons()
 	}
 
     return hw_buttons;
-}
-
-i2s_chan_handle_t setup_audio_i2s() {
-
-    i2s_chan_handle_t new_i2s_audio_handle;
-    
-    i2s_chan_config_t chan_cfg = I2S_CHANNEL_DEFAULT_CONFIG(I2S_NUM_0, I2S_ROLE_MASTER);
-
-    ESP_ERROR_CHECK(i2s_new_channel(&chan_cfg, &new_i2s_audio_handle, NULL));
-
-    i2s_std_config_t i2s_config = {
-        .clk_cfg  = I2S_STD_CLK_DEFAULT_CONFIG(GW_SYS_FREQ),
-        .slot_cfg = I2S_STD_MSB_SLOT_DEFAULT_CONFIG(I2S_DATA_BIT_WIDTH_16BIT, I2S_SLOT_MODE_MONO),
-        .gpio_cfg = {
-            .mclk = GPIO_NUM_NC,
-            .bclk = AUD_I2S_BCK,    // CLK
-            .ws = AUD_I2S_WS,       // LRC
-            .dout = AUD_I2S_DATA,   // DIN
-            .din = GPIO_NUM_NC,  
-        }
-    };
-
-    ESP_ERROR_CHECK(i2s_channel_init_std_mode(new_i2s_audio_handle, &i2s_config));
-    ESP_ERROR_CHECK(i2s_channel_enable(new_i2s_audio_handle));
-
-    return new_i2s_audio_handle;
-
 }
 
 esp_lcd_panel_handle_t setup_lcd_spi() {
@@ -228,23 +195,25 @@ void display_volume_battery(unsigned short *framebuffer)
 
 void app_main(void)
 {
-
-    // memory for sound and screen
+	
+	// memory for sound and screen
 
     uint16_t *framebuffer = (uint16_t *)heap_caps_malloc(GW_SCREEN_WIDTH * GW_SCREEN_HEIGHT * sizeof(uint16_t), MALLOC_CAP_DMA | MALLOC_CAP_INTERNAL);
 
     uint16_t audio_buffer[GW_AUDIO_BUFFER_LENGTH];
 
+
+	// i2c
+	i2c_init();
+	
     // sound
-    i2s_audio_handle = setup_audio_i2s();
+    audio_setup();
 
     // screen
     esp_lcd_panel_handle_t spi_lcd_handle = setup_lcd_spi();
 
-
     // keyboard
     keyboard_setup();
-
 
     // flash
     esp_err_t err = nvs_flash_init();
@@ -253,7 +222,6 @@ void app_main(void)
         ESP_ERROR_CHECK(nvs_flash_erase());
         ESP_ERROR_CHECK(nvs_flash_init());
     }
-    
     
     volume_read();
 
@@ -338,6 +306,7 @@ void app_main(void)
 			if (volume_display_count > 0 || battery_display_count > 0) {
 				display_volume_battery(framebuffer);
 			}
+
 
 			esp_lcd_panel_draw_bitmap(spi_lcd_handle, 0, 0, GW_SCREEN_WIDTH, GW_SCREEN_HEIGHT, framebuffer);
 		}

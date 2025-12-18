@@ -210,7 +210,6 @@ void volume_menu_tone(i2s_chan_handle_t i2s_handle, int volume_level)
         ESP_ERROR_CHECK(i2s_channel_write(i2s_handle, buffer, sizeof(buffer), &written, portMAX_DELAY));
     }
 
-
     memset(buffer, 0, sizeof(buffer));
     for (int j = 0; j < repeat; j++) {
         ESP_ERROR_CHECK(i2s_channel_write(i2s_handle, buffer, sizeof(buffer), &written, portMAX_DELAY));

@@ -1,7 +1,7 @@
 idf_component_register(SRC_DIRS "." "lcd_game_emulator/src" "lcd_game_emulator/src/cpus" "lcd_game_emulator/src/gw_sys"
                        INCLUDE_DIRS "." "lcd_game_emulator/src" "lcd_game_emulator/src/cpus" "lcd_game_emulator/src/gw_sys"
                        EMBED_FILES
-                        "menu.raw"  
+						"menu.raw"  
 						"Game & Watch Ball.gw"
 						"Game & Watch Chef.gw"
 						"Game & Watch Egg.gw"

@@ -1,13 +1,19 @@
 # Game and Watch for the CardPuter.
 
-I developed it using the Cardputer v1.1. You might need to make some changes to get it to work on the other versions.
+Tested with Cardputer v1.1 and Cardputer Adv.
 
 <table>
+<tr>
+    <td align="center"><img src="../assets/cardputer_3.jpg" alt="CardPuter" width="800"></td>
+</tr>
 <tr>
     <td align="center"><img src="../assets/cardputer_1.jpg" alt="CardPuter" width="800"></td>
 </tr>
 <tr>
     <td align="center"><img src="../assets/cardputer_2.jpg" alt="CardPuter" width="800"></td>
+</tr>
+<tr>
+    <td align="center"><img src="../assets/cardputer_4.jpg" alt="CardPuter" width="800"></td>
 </tr>
 </table>
 

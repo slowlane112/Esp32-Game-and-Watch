@@ -201,7 +201,6 @@ void menu_display_bottom_section(unsigned short *framebuffer, uint16_t bar_color
 	menu_display_text(framebuffer, game.name, text_y_start, text1_x_start, game.text_color, bar_color);		
 
 	menu_display_text(framebuffer, game.year, text_y_start, text2_x_start, game.text_color, bar_color);
-
 	
 }
 
@@ -264,7 +263,6 @@ void menu_display_item(unsigned short *framebuffer, int index)
 			
 		}
     }
-    
     
     //uint16_t bar_color = 0xff00;
 	

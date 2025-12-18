@@ -28,8 +28,7 @@ Game games[] = {
     { "Super Mario Bros.", "1988", 133, 80, 6, 0x0000 },
     { "Climber", "1988", 133, 80, 6, 0xffff },
     { "Balloon Fight", "1988", 132, 80, 6, 0xffff },
-    { "Mario the Juggler", "1991", 132, 80, 6, 0x0000 },  
-    
+    { "Mario the Juggler", "1991", 132, 80, 6, 0x0000 }
 };
 
 int game_count = sizeof(games) / sizeof(games[0]);
@@ -259,13 +258,13 @@ void game_load(int index)
     else if (index == 23) {
         ROM_DATA = (unsigned char *)gnwclimber_gw_start;
         ROM_DATA_LENGTH = gnwclimber_gw_end - gnwclimber_gw_start;
-        button_control_type = 2;
+        button_control_type = 5;
 		button_control_mode = 0;  
     }
     else if (index == 24) {
         ROM_DATA = (unsigned char *)gnwdballoonfight_gw_start;
         ROM_DATA_LENGTH = gnwdballoonfight_gw_end - gnwdballoonfight_gw_start;
-        button_control_type = 2;
+        button_control_type = 5;
 		button_control_mode = 0;  
     }
     else if (index == 25) {
