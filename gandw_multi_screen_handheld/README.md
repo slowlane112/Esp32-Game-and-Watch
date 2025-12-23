@@ -26,11 +26,9 @@ Use the information provided in this project at your own risk.
 
 # Features
 
-Plays 3 two button multi screen game and watch games. Press button on power up to select the game.
-Game A: Oil Panic
-Game B: Safebuster
-Time: Pinball
-Remembers last game selected if no buttons pressed on power up.
+Plays 3 two button multi screen game and watch games.<br>
+Use the left and right buttons in the menu to select a game, then press Game A to start the game.<br>
+You can return to the menu by pressing the left and right buttons for a few seconds.
 
 ## Volume Adjustment
 Volume adjustment with on screen display.
@@ -94,9 +92,9 @@ Battery level is displayed on power up.
 </tr>
 </table>
 
-Connect the display to a 10 pin ribbon cable using small wires.
-
-In the bottom screen section, trim size of ribbon cable connector adapter board so it will fit in space near the speaker.
+Connect the display to a 10 pin ribbon cable using small wires.<br>
+In the bottom screen section, trim size of ribbon cable connector adapter board so it will fit in space near the speaker.<br>
+You might find it easier to skip ribbon cable adapter and solder directly to the ribbon cable.
 
 # Power
 
@@ -202,6 +200,7 @@ This makes the total resolution 320 x 420.
 
 
 # Roms
+
 The roms must be in .gw format.
 
 These can be created using LCD-Game-Shrinker.
@@ -211,6 +210,16 @@ https://github.com/bzhxx/LCD-Game-Shrinker
 Below is a link to a guide describing how to use LCD-Game-Shrinker to generate the files.
 
 https://gist.github.com/DNA64/16fed499d6bd4664b78b4c0a9638e4ef
+
+Below is a list of the gw files required:
+
+<table cellpadding="2" cellspacing="0">
+<tr><td>Mame Rom</td><td>GW File</td></tr>
+<tr><td>gnw_opanic</td><td>Game & Watch Oil Panic.gw</td></tr>
+<tr><td>gnw_pinball</td><td>Game & Watch Pinball.gw</td></tr>
+<tr><td>gnw_sbuster</td><td>Game & Watch Safe Buster.gw</td></tr>
+</table>
+
 
 ## Additional Steps for Multi Screen Games
 
@@ -299,16 +308,19 @@ The height difference is removed from the y attribute of all the bottom screen e
 
 
 # Building
-Install the ESP-IDF framework. Current version is v5.4.1
+
+Install the ESP-IDF framework. The version I used was v5.4.1, but it should also work with newer versions.
 https://docs.espressif.com/projects/esp-idf/en/stable/esp32s3/get-started/index.html
 
 Make sure you can build the hello_world example project.
 
 Download the code from this repo.
 
-Use LCD-Game-Shrinker to generate a rom file for oil panic. Rename the files to gnwoilpanic.gw, gnwsafebuster.gw and gnwpinball.gw then place the files in the /gandw_multi_screen/main/ directory.
+Use LCD-Game-Shrinker to generate a game files (see above) and place the gw files in the /gandw_multi_screen_handheld/main/ directory.
 
-Go back to /gandw_multi_screen/ directory and open the terminal or cmd window in this directory.
+Go back to /gandw_multi_screen_handheld/ directory and open the terminal or cmd window in this directory.
+
+
 
 ## Linux
 These instructions are for linux. If you are using windows follow the same steps you did when building the hello_world example project.
@@ -358,23 +370,13 @@ All the ILI9341 lcd panels i used required the pixel data to be byte swapped for
 
 I have swapped the byte order for the background and segment pixel data in lcd game emulator.
 
-If the image displayed on your screen looks incorrect (wrong colours) you can remove the byte swap code.
+If the image displayed on your screen looks incorrect (wrong colours) you can change the byte swap setting.
 
-In the file: /main/lcd_game_emulator/src/gw_sys/gw_romloader.c, comment or remove the byte swap for loop.
+In the file: /main/lcd_game_emulator/src/gw_sys/gw_system.h, set BYTE_SWAP to 0.
 
 ```
-    gw_background = (unsigned short *)&GW_ROM[gw_head.background_pixel];
-
-    // Byte swap background
-    /* for (int i = 0; i < GW_SCREEN_HEIGHT * GW_SCREEN_WIDTH; i++) {
-        gw_background[i] = (gw_background[i] >> 8) | (gw_background[i] << 8);
-    } */
+#define BYTE_SWAP 0
 ```
-In the file: /main/lcd_game_emulator/src/gw_sys/gw_graphic.c:
-
-Look for the rgb_multiply_8bits function.
-
-Comment the byte swap version and uncomment the non byte swap version.
 
 # Acknowledgements
 

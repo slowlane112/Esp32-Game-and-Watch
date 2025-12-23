@@ -156,8 +156,13 @@ void sm500_op_trs()
 		do_branch(get_trs_field(), 0, m_op & 0x3f);
 
 		// E flag was set?
-		if ((m_prev_op & 0xf0) == 0x70)
+		if ((m_prev_op & 0xf0) == 0x70) {
 			do_branch(m_cb, su, m_pc & 0x3f);
+			// added to fix some flag_lcd_deflicker_level 2 games
+			if (flag_lcd_deflicker_level == 3) {
+				sm500_update_segments_state();
+			}
+		}
 	}
 	else
 		m_pc = (m_pc & ~0xff) | (m_op << 2 & 0xc0) | (m_op & 0xf);

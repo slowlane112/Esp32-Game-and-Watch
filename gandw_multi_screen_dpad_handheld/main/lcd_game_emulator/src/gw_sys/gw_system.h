@@ -23,8 +23,12 @@ __license__ = "GPLv3"
 
 #include "gw_type_defs.h"
 
-#define GW_SCREEN_WIDTH 320
-#define GW_SCREEN_HEIGHT 420
+#define GW_SCREEN_WIDTH 	320
+#define GW_SCREEN_HEIGHT 	420
+#define BYTE_SWAP 			1
+#define DISPLAY_HEIGHT      240
+#define RENDER_HEIGHT       210
+#define RENDER_PADDING      15
 
 /* refresh rate 128Hz */
 #define GW_REFRESH_RATE 128
