@@ -41,6 +41,8 @@ __license__ = "GPLv3"
 #define GW_MASK_RGB565_G 0x07E0
 #define GW_MASK_RGB565_B 0x001F
 
+bool process_oil_panic = false;
+
 static uint16 *gw_graphic_framebuffer = 0;
 
 static uint16 *source_mixer = 0;
@@ -254,6 +256,113 @@ __attribute__((optimize("unroll-loops"))) static inline void update_segment_8bit
 	}
 }
 
+/* Oil Panic processing 
+ * 
+ * The player is made up of multiple segments, and timing issues can cause incorrect segments to appear briefly during movement.
+ * This code verifies each player segment before rendering and ensures that only the segments corresponding to the player's torso position are displayed.
+ */
+
+const uint8 oil_panic_segments[] = {40, 46, 50, 59, 123, 104, 112, 52, 100, 128, 60, 106, 114, 55, 44, 48, 56}; 
+
+bool oil_panic_segment_values[] = {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false}; 
+
+bool oil_panic_is_process_segment(uint8 value)
+{
+    for (size_t i = 0; i < 17; i++) {
+        if (oil_panic_segments[i] == value) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void oil_panic_set_segment(uint8 segment, bool value)
+{
+    for (int i = 0; i < 17; i++) {
+        if (oil_panic_segments[i] == segment) {
+            oil_panic_segment_values[i] = value;
+            return;
+        }
+    }
+}
+
+bool oil_panic_get_segment(uint8 segment)
+{
+    for (int i = 0; i < 17; i++) {
+        if (oil_panic_segments[i] == segment) {
+            return oil_panic_segment_values[i];
+        }
+    }
+    return false;
+}
+
+bool oil_panic_any_segments_true(uint8 seg1, uint8 seg2, uint8 seg3)
+{
+    for (int i = 0; i < 17; i++) {
+        uint8 seg = oil_panic_segments[i];
+
+        if (seg == seg1 || seg == seg2 || seg == seg3) {
+            if (oil_panic_segment_values[i] == true) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+__attribute__((optimize("unroll-loops"))) static inline void oil_panic_update_segment_4bits(uint8 segment_nb, bool segment_state)
+{
+	if (!oil_panic_is_process_segment(segment_nb)) {
+		update_segment_4bits(segment_nb, segment_state); // not player segment, render as normal
+	}
+	else {
+		oil_panic_set_segment(segment_nb, segment_state);
+	}
+}
+
+static inline void oil_panic_complete_processing()
+{
+	
+	if (oil_panic_get_segment(40) && oil_panic_get_segment(123)) { // start up screen - show all
+		for (int i = 0; i < 17; i++) {
+			update_segment_4bits(oil_panic_segments[i], true);
+		}
+	}
+	else {
+	
+		if (oil_panic_get_segment(40)) {
+			update_segment_4bits(40, true); // torso left balcony 
+		}
+		else if (oil_panic_get_segment(46)) {
+			update_segment_4bits(46, true); // torso left
+			update_segment_4bits(104, true); // bucket left
+			update_segment_4bits(100, oil_panic_any_segments_true(100, 128, 60)); // left bucket level top
+			update_segment_4bits(106, oil_panic_any_segments_true(106, 114, 55)); // left bucket level middle
+			update_segment_4bits(44, oil_panic_any_segments_true(44, 48, 56)); // left bucket level bottom
+		}
+		else if (oil_panic_get_segment(50)) {
+			update_segment_4bits(50, true); // torso middle
+			update_segment_4bits(112, true); // bucket middle
+			update_segment_4bits(128, oil_panic_any_segments_true(100, 128, 60));  // middle bucket level top
+			update_segment_4bits(114, oil_panic_any_segments_true(106, 114, 55));  // middle bucket level middle
+			update_segment_4bits(48, oil_panic_any_segments_true(44, 48, 56)); // middle bucket level bottom
+		}
+		else if (oil_panic_get_segment(59)) {
+			update_segment_4bits(59, true); // torso right
+			update_segment_4bits(52, true); // bucket right
+			update_segment_4bits(60, oil_panic_any_segments_true(100, 128, 60)); // right bucket level top
+			update_segment_4bits(55, oil_panic_any_segments_true(106, 114, 55)); // right bucket level middle
+			update_segment_4bits(56, oil_panic_any_segments_true(44, 48, 56)); // right bucket level bottom
+		}
+		else if (oil_panic_get_segment(123)) {
+			update_segment_4bits(123, true); // torso right balcony
+		}
+	
+	}
+}
+
+/* Oil Panic processing end */
+
 /* Specific functions to pool segments status */
 
 /* Flicker filter enable flag */
@@ -355,6 +464,10 @@ __attribute__((optimize("unroll-loops"))) inline void gw_gfx_sm510_rendering(uin
 
 		update_segment(132 + seg_z, ((segment_state & (1 << seg_z)) != 0));
 	}
+	
+	if (process_oil_panic) {
+		oil_panic_complete_processing();
+	}
 }
 
 /* SM500 I/O based LCD controller */
@@ -417,14 +530,53 @@ void gw_gfx_init()
 	// for emulated cpus side
 	flag_lcd_deflicker_level = (gw_head.flags & FLAG_LCD_DEFLICKER_MASK) >> 6;
 
+    // fix for chef and Tropical Fish and Flagman - printf("[%.8s]\n", gw_head.rom_signature);
+    if (memcmp(gw_head.rom_signature, "gnw_chef", 8) == 0) {
+        flag_lcd_deflicker_level = 1;
+    }
+    else if (memcmp(gw_head.rom_signature, "nw_tfish", 8) == 0) {
+        flag_lcd_deflicker_level = 0;
+    }
+    else if (memcmp(gw_head.rom_signature, "_flagman", 8) == 0) {
+        flag_lcd_deflicker_level = 1;
+    }
+    else if (memcmp(gw_head.rom_signature, "_octopus", 8) == 0
+				|| memcmp(gw_head.rom_signature, "gnw_ball", 8) == 0
+				|| memcmp(gw_head.rom_signature, "nw_judge", 8) == 0
+				|| memcmp(gw_head.rom_signature, "manholeg", 8) == 0
+				|| memcmp(gw_head.rom_signature, "w_helmet", 8) == 0
+				|| memcmp(gw_head.rom_signature, "gnw_lion", 8) == 0
+				|| memcmp(gw_head.rom_signature, "w_pchute", 8) == 0
+				|| memcmp(gw_head.rom_signature, "w_mmouse", 8) == 0
+				|| memcmp(gw_head.rom_signature, " gnw_egg", 8) == 0
+				|| memcmp(gw_head.rom_signature, "gnw_fire", 8) == 0
+    
+    ) {
+		// hack for some games to update segments in sm500_op_trs subroutine
+		flag_lcd_deflicker_level = 3;
+	}
+	
 	// for segments rendering side
 	deflicker_enabled = (flag_lcd_deflicker_level != 0);
+	
+	
+	if (memcmp(gw_head.rom_signature, "w_opanic", 8) == 0) {
+		process_oil_panic = true;
+	}
 
 	/* determine which API to use for segments rendering */
 	update_segment = update_segment_8bits;
 
 	if (gw_head.flags & FLAG_SEGMENTS_4BITS)
-		update_segment = update_segment_4bits;
+	{
+		if (process_oil_panic) {
+			update_segment = oil_panic_update_segment_4bits;
+		}
+		else {
+			update_segment = update_segment_4bits;
+		}
+	}
+	
 	if (gw_head.flags & FLAG_SEGMENTS_2BITS)
 		update_segment = update_segment_2bits;
 

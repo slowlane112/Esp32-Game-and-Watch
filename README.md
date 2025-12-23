@@ -1,5 +1,9 @@
 # Esp32-Game-and-Watch
 
+Esp32‑Game‑and‑Watch is a project for recreating classic Game & Watch handhelds using an ESP32 microcontroller, 3D‑printed cases, and simple electronics. 
+
+It currently supports most single screen and multi screen Game & Watch titles, making it easy to recreate a wide range of the original handhelds.
+
 <table>
 <tr>
 <td><strong>Demo</strong></td>
