@@ -8,6 +8,7 @@ It currently supports most single screen and multi screen Game & Watch titles, m
 <tr>
 <td><strong>Demo</strong></td>
 </tr>
+<tr>
 <td>
 	<p><strong>Single Screen</strong></p>
 	<p><a href="https://github.com/slowlane112/Esp32-Game-and-Watch/tree/main/gandw_single_screen">
@@ -33,6 +34,7 @@ It currently supports most single screen and multi screen Game & Watch titles, m
 <tr>
 <td><strong>Single Screen Handheld</strong></td>
 </tr>
+<tr>
 <td>
 	<p><strong>2 Buttons</strong></p>
 	<p><a href="https://github.com/slowlane112/Esp32-Game-and-Watch/tree/main/gandw_single_screen_handheld">
@@ -58,6 +60,7 @@ It currently supports most single screen and multi screen Game & Watch titles, m
 <tr>
 <td><strong>Multi Screen Handheld</strong></td>
 </tr>
+<tr>
 <td>
 	<p><strong>2 Buttons</strong></p>
 	<p><a href="https://github.com/slowlane112/Esp32-Game-and-Watch/tree/main/gandw_multi_screen_handheld">
@@ -83,11 +86,22 @@ It currently supports most single screen and multi screen Game & Watch titles, m
 <tr>
 <td><strong>CardPuter</strong></td>
 </tr>
+<tr>
 <td>
+	<p><strong>Single Screen</strong></p>
 	<p><a href="https://github.com/slowlane112/Esp32-Game-and-Watch/tree/main/gandw_cardputer">
     	<img src="assets/cardputer_1.jpg" alt="CardPuter" width="400">
 	</a></p>
 	<p><a href="https://github.com/slowlane112/Esp32-Game-and-Watch/tree/main/gandw_cardputer">https://github.com/slowlane112/Esp32-Game-and-Watch/tree/main/gandw_cardputer</a></p>
+</td>
+</tr>
+<tr>
+<td>
+	<p><strong>Multi Screen</strong></p>
+	<p><a href="https://github.com/slowlane112/Esp32-Game-and-Watch/tree/main/gandw_cardputer_multi_screen">
+    	<img src="assets/cardputer_multi_screen_1.jpg" alt="CardPuter" width="400">
+	</a></p>
+	<p><a href="https://github.com/slowlane112/Esp32-Game-and-Watch/tree/main/gandw_cardputer_multi_screen">https://github.com/slowlane112/Esp32-Game-and-Watch/tree/main/gandw_cardputer_multi_screen</a></p>
 </td>
 </tr>
 </table>
