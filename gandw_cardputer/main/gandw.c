@@ -193,6 +193,16 @@ void display_volume_battery(unsigned short *framebuffer)
 
 }
 
+void reset_system(unsigned short *framebuffer, esp_lcd_panel_handle_t spi_lcd_handle)
+{
+	for (int i = 0; i < GW_SCREEN_HEIGHT * GW_SCREEN_WIDTH; i++) {
+        framebuffer[i] = 0x0000;
+    }
+    esp_lcd_panel_draw_bitmap(spi_lcd_handle, 0, 0, GW_SCREEN_WIDTH, GW_SCREEN_HEIGHT, framebuffer);
+    vTaskDelay(pdMS_TO_TICKS(50));
+    esp_restart();
+}
+
 void app_main(void)
 {
 	
@@ -322,6 +332,10 @@ void app_main(void)
 		i2s_channel_write(i2s_audio_handle, audio_buffer, sizeof(audio_buffer), &bytes_written, portMAX_DELAY);
 
 		gw_audio_buffer_copied = true;
+		
+		if (menu_show) {
+			reset_system(framebuffer, spi_lcd_handle);
+		}
 		
    } 
     

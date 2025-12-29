@@ -115,6 +115,10 @@ static esp_err_t adv_tca8418_read_mult_reg(uint8_t reg_addr, uint8_t *data_buf, 
     );
 }
 
+esp_err_t adv_tca8418_read_reg(uint8_t reg, uint8_t *data) {
+    return i2c_master_write_read_device(ADV_I2C_PORT, ADV_TCA8418_ADDR, &reg, 1, data, 1, pdMS_TO_TICKS(100));
+}
+
 static void adv_keycode_to_rc(uint8_t keycode, int *r, int *c) {
     if (keycode == 0) { *r = -1; *c = -1; return; }
     // Keycode = 1 + (Column Index * 8) + Row Index
@@ -167,26 +171,35 @@ static void IRAM_ATTR adv_tca8418_isr_handler(void *arg) {
 
 void adv_keyboard_setup() 
 {
-    
     adv_tca8418_write_reg(ADV_REG_CFG, 0x01);       
-    
     adv_tca8418_write_reg(ADV_REG_KP_GPIO1, 0xFF);
     adv_tca8418_write_reg(ADV_REG_KP_GPIO2, 0xFF);
     adv_tca8418_write_reg(ADV_REG_KP_GPIO3, 0x03);
-    adv_tca8418_write_reg(ADV_REG_INT_EN, 0x02);
-    adv_tca8418_write_reg(ADV_REG_INT_STAT, 0xFF);
+    
+    uint8_t stat;
+    adv_tca8418_read_reg(ADV_REG_INT_STAT, &stat); 
+    adv_tca8418_write_reg(ADV_REG_INT_STAT, 0xFF); // Clear all bits
 
     adv_key_event_queue = xQueueCreate(10, sizeof(uint32_t)); 
-    gpio_set_direction(ADV_INT_PIN, GPIO_MODE_INPUT);
-    gpio_set_pull_mode(ADV_INT_PIN, GPIO_PULLUP_ONLY);
-    gpio_set_intr_type(ADV_INT_PIN, GPIO_INTR_NEGEDGE);
+    xTaskCreate(adv_tca8418_event_task, "adv_tca_evt_task", 4096, NULL, 10, NULL);
+
+    gpio_config_t io_conf = {
+        .intr_type = GPIO_INTR_NEGEDGE,
+        .mode = GPIO_MODE_INPUT,
+        .pin_bit_mask = (1ULL << ADV_INT_PIN),
+        .pull_up_en = 1,
+    };
+    gpio_config(&io_conf);
+
+    if (gpio_get_level(ADV_INT_PIN) == 0) {
+        uint32_t dummy = 0;
+        xQueueSend(adv_key_event_queue, &dummy, 0);
+    }
+
+    adv_tca8418_write_reg(ADV_REG_INT_EN, 0x02); // Enable Keypad Interrupt
     gpio_install_isr_service(0);
     gpio_isr_handler_add(ADV_INT_PIN, adv_tca8418_isr_handler, NULL);
-
-    xTaskCreate(adv_tca8418_event_task, "adv_tca_evt_task", 4096, NULL, 10, NULL);
-    
 }
-
 
 // ###### Cardputer Original ###### 
 

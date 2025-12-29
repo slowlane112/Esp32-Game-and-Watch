@@ -5,6 +5,7 @@
 #include "volume.h"
 #include "menu.h"
 #include "driver/i2s_std.h"
+#include "esp_timer.h"
 #include "esp_system.h"
 
 // buttons
@@ -17,7 +18,7 @@
 #define BUTTON_ACL          GPIO_NUM_8
 
 uint8_t button_start_delay = 63;
-uint8_t button_reset_count = 0;
+int64_t button_reset_timer = 0;
 extern i2s_chan_handle_t i2s_audio_handle;
 
 void button_setup() {
@@ -103,16 +104,19 @@ unsigned int button_get_buttons()
 		
 		if (gpio_get_level(BUTTON_LEFT) == 0 && gpio_get_level(BUTTON_RIGHT) == 0) { 
 		
-			button_reset_count++;
-			
-			if (button_reset_count == 255) {
-				menu_show = true;
+			if (button_reset_timer == 0) {
+				button_reset_timer = esp_timer_get_time();
+			}
+			else {
+				if (esp_timer_get_time() - button_reset_timer > 2000000) {
+					menu_show = true;
+				}
 			}
 			
 			return 0;
 		}
 		else {
-			button_reset_count = 0;
+			button_reset_timer = 0;
 		}
 
 

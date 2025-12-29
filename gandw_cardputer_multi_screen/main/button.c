@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <gw_system.h>
 #include "driver/i2s_std.h"
+#include "esp_timer.h"
 #include "button.h"
 #include "volume.h"
 #include "menu.h"
@@ -9,7 +10,7 @@
 uint8_t button_control_type = 2;
 uint8_t button_control_mode = 0;
 uint8_t button_start_delay = 63;
-uint8_t button_reset_count = 0;
+int64_t button_reset_timer = 0;
 
 uint8_t button_get_menu_buttons(char key)
 {
@@ -53,17 +54,20 @@ void process_reset_key(char key) {
 	
 	if (key == 0x87) { 
 		
-		button_reset_count++;
-	
-		if (button_reset_count == 255) {
-			menu_show = true;
+		if (button_reset_timer == 0) {
+			button_reset_timer = esp_timer_get_time();
 		}
-		
-		//return 0;
+		else {
+			if (esp_timer_get_time() - button_reset_timer > 2000000) {
+				menu_show = true;
+			}
+		}
+
 	}
 	else {
-		button_reset_count = 0;
+		button_reset_timer = 0;
 	}
+	
 }
 
 unsigned int button_get_two_buttons(char key)

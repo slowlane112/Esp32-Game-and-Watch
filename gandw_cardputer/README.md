@@ -21,7 +21,7 @@ Tested with Cardputer v1.1 and Cardputer Adv.
 
 Supports 26 single screen Game and Watch games.<br>
 Use the left and right arrow keys in the menu to select a game, then press Ok to start the game.<br>
-You can return to the menu by pressing reset.
+You can return to the menu by pressing and holding the backspace key or pressing the cardputers reset button.
 
 
 # Buttons
@@ -187,7 +187,7 @@ Make sure you can build the hello_world example project.
 
 Download the code from this repo.
 
-Use LCD-Game-Shrinker to generate a game files (see above) and place the gw files in the /gandw_cardputer/main/ directory.
+Use LCD-Game-Shrinker to generate the game files (see above) and place the gw files in the /gandw_cardputer/main/ directory.
 
 Go back to /gandw_cardputer/ directory and open the terminal or cmd window in this directory.
 
