@@ -43,6 +43,8 @@ __license__ = "GPLv3"
 
 bool process_oil_panic = false;
 
+#define IS_ROM(s) (memcmp(gw_head.rom_signature, s, 8) == 0)
+
 static uint16 *gw_graphic_framebuffer = 0;
 
 static uint16 *source_mixer = 0;
@@ -530,45 +532,43 @@ void gw_gfx_init()
 	// for emulated cpus side
 	flag_lcd_deflicker_level = (gw_head.flags & FLAG_LCD_DEFLICKER_MASK) >> 6;
 
-    // fix for chef and Tropical Fish and Flagman - printf("[%.8s]\n", gw_head.rom_signature);
-    if (memcmp(gw_head.rom_signature, "gnw_chef", 8) == 0) {
-        flag_lcd_deflicker_level = 1;
-    }
-    else if (memcmp(gw_head.rom_signature, "nw_tfish", 8) == 0) {
-        flag_lcd_deflicker_level = 0;
-    }
-    else if (memcmp(gw_head.rom_signature, "_flagman", 8) == 0) {
-        flag_lcd_deflicker_level = 1;
-    }
-    else if (memcmp(gw_head.rom_signature, "_octopus", 8) == 0
-				|| memcmp(gw_head.rom_signature, "gnw_ball", 8) == 0
-				|| memcmp(gw_head.rom_signature, "nw_judge", 8) == 0
-				|| memcmp(gw_head.rom_signature, "manholeg", 8) == 0
-				|| memcmp(gw_head.rom_signature, "w_helmet", 8) == 0
-				|| memcmp(gw_head.rom_signature, "gnw_lion", 8) == 0
-				|| memcmp(gw_head.rom_signature, "w_pchute", 8) == 0
-				|| memcmp(gw_head.rom_signature, "w_mmouse", 8) == 0
-				|| memcmp(gw_head.rom_signature, " gnw_egg", 8) == 0
-				|| memcmp(gw_head.rom_signature, "gnw_fire", 8) == 0
-    
-    ) {
-		// hack for some games to update segments in sm500_op_trs subroutine
+    // fix for some roms by changing flag_lcd_deflicker_level - printf("[%.8s]\n", gw_head.rom_signature);
+    if IS_ROM("nw_tfish") {
+		// change from value set in lcd game shrinker
+		flag_lcd_deflicker_level = 0;
+	}
+	else if (IS_ROM("gnw_chef") || IS_ROM("_flagman")) {
+		// change from value set in lcd game shrinker
+		flag_lcd_deflicker_level = 1;
+	}
+	else if (IS_ROM("_octopus") || IS_ROM("gnw_ball")  || IS_ROM("nw_judge")
+				|| IS_ROM("manholeg") || IS_ROM("w_helmet") || IS_ROM("gnw_lion")
+				|| IS_ROM("w_pchute") || IS_ROM("w_mmouse") || IS_ROM(" gnw_egg")
+				|| IS_ROM("gnw_fire")) {
+		// flag level 2 rom that need to also update segments in sm500_op_trs subroutine
 		flag_lcd_deflicker_level = 3;
 	}
-	
+    else if IS_ROM("w_popeye") {
+		// flag level 2 rom that need to also update segments in sm500_op_rtn1
+		flag_lcd_deflicker_level = 4;
+	}
+	else if IS_ROM("nw_fires") {
+		// flag level 2 rom that need to also update segments in sm500_op_atbp
+		flag_lcd_deflicker_level = 5;
+	}
+
 	// for segments rendering side
 	deflicker_enabled = (flag_lcd_deflicker_level != 0);
 	
-	
-	if (memcmp(gw_head.rom_signature, "w_opanic", 8) == 0) {
+	if (IS_ROM("w_opanic")) {
+		// special segment processing for oil panic
 		process_oil_panic = true;
 	}
 
 	/* determine which API to use for segments rendering */
 	update_segment = update_segment_8bits;
 
-	if (gw_head.flags & FLAG_SEGMENTS_4BITS)
-	{
+	if (gw_head.flags & FLAG_SEGMENTS_4BITS) {
 		if (process_oil_panic) {
 			update_segment = oil_panic_update_segment_4bits;
 		}

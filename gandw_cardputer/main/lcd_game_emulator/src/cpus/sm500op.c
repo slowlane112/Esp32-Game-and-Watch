@@ -125,6 +125,10 @@ void sm500_op_rtn0()
 
 void sm500_op_rtn1()
 {
+	// added to fix some flag_lcd_deflicker_level 2 games
+	if (flag_lcd_deflicker_level == 4)
+		sm500_update_segments_state();
+			
 	// RTN0(RTN): return from subroutine
 	sm500_op_rtn0();
 	m_skip = true;
@@ -158,7 +162,7 @@ void sm500_op_trs()
 		// E flag was set?
 		if ((m_prev_op & 0xf0) == 0x70) {
 			do_branch(m_cb, su, m_pc & 0x3f);
-			// added to fix octopus
+			// added to fix some flag_lcd_deflicker_level 2 games
 			if (flag_lcd_deflicker_level == 3) {
 				sm500_update_segments_state();
 			}
@@ -199,6 +203,10 @@ void sm500_op_atbp()
 	// ATBP: output ACC to BP(internal LCD backplate signal)
 	m_bp = m_acc & 1;
 	m_cn = m_acc >> 3 & 1;
+	
+	// added to fix some flag_lcd_deflicker_level 2 games
+	if (flag_lcd_deflicker_level == 5)
+		sm500_update_segments_state();
 }
 
 void sm500_op_ptw()

@@ -41,6 +41,10 @@ __license__ = "GPLv3"
 #define GW_MASK_RGB565_G 0x07E0
 #define GW_MASK_RGB565_B 0x001F
 
+bool process_oil_panic = false;
+
+#define IS_ROM(s) (memcmp(gw_head.rom_signature, s, 8) == 0)
+
 static uint16 *gw_graphic_framebuffer = 0;
 
 static uint16 *source_mixer = 0;
@@ -60,9 +64,9 @@ static inline uint16_t __internal_bswap16(uint16_t val) {
   sg: segment is 8bits Green of RGB565 16 pixel format
 */
 
-/* Non byte swap segment rgb_multiply_8bits */
 
-/*static inline uint16 rgb_multiply_8bits(uint32 bg, uint32 sg)
+/* Non byte swap segment rgb_multiply_8bits */
+static inline uint16 rgb_multiply_8bits_non_byte_swap(uint32 bg, uint32 sg)
 {
 
 	// Separate each colors
@@ -77,24 +81,24 @@ static inline uint16_t __internal_bswap16(uint16_t val) {
 
 	// return in RGB565 format
 	return (uint16)(bg_r << 11) | (bg_g << 5) | bg_b;
-}*/
+}
 
 
 
 /* Byte swap segment rgb_multiply_8bits */
 
-static inline uint16_t rgb_multiply_8bits(uint32_t bg, uint32_t sg)
+static inline uint16_t rgb_multiply_8bits_byte_swap(uint32_t bg, uint32_t sg)
 {
 
     // swap bg back
     uint16_t unswapped_bg = __internal_bswap16((uint16_t)bg);
 
-    // Separate each colors
+    /* Separate each colors */
     uint32_t bg_r = (unswapped_bg & GW_MASK_RGB565_R) >> 11;
     uint32_t bg_g = (unswapped_bg & GW_MASK_RGB565_G) >> 5;
     uint32_t bg_b = (unswapped_bg & GW_MASK_RGB565_B);
 
-    // RGB multiply and normalize
+    /* RGB multiply and normalize */
     bg_r = (bg_r * sg) >> 8;
     bg_g = (bg_g * sg) >> 8;
     bg_b = (bg_b * sg) >> 8;
@@ -105,6 +109,17 @@ static inline uint16_t rgb_multiply_8bits(uint32_t bg, uint32_t sg)
                                (bg_b << 3) |          // Blue (5 bits)
                                ((bg_g & 0x38) >> 3);  // Lower 3 bits of green
 
+}
+
+
+static inline uint16 rgb_multiply_8bits(uint32 bg, uint32 sg)
+{
+	if (BYTE_SWAP) {
+		return rgb_multiply_8bits_byte_swap(bg, sg);
+	}
+	
+	return rgb_multiply_8bits_non_byte_swap(bg, sg);
+	
 }
 
 
@@ -254,6 +269,113 @@ __attribute__((optimize("unroll-loops"))) static inline void update_segment_8bit
 	}
 }
 
+/* Oil Panic processing 
+ * 
+ * The player is made up of multiple segments, and timing issues can cause incorrect segments to appear briefly during movement.
+ * This code verifies each player segment before rendering and ensures that only the segments corresponding to the player's torso position are displayed.
+ */
+
+const uint8 oil_panic_segments[] = {40, 46, 50, 59, 123, 104, 112, 52, 100, 128, 60, 106, 114, 55, 44, 48, 56}; 
+
+bool oil_panic_segment_values[] = {false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false}; 
+
+bool oil_panic_is_process_segment(uint8 value)
+{
+    for (size_t i = 0; i < 17; i++) {
+        if (oil_panic_segments[i] == value) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void oil_panic_set_segment(uint8 segment, bool value)
+{
+    for (int i = 0; i < 17; i++) {
+        if (oil_panic_segments[i] == segment) {
+            oil_panic_segment_values[i] = value;
+            return;
+        }
+    }
+}
+
+bool oil_panic_get_segment(uint8 segment)
+{
+    for (int i = 0; i < 17; i++) {
+        if (oil_panic_segments[i] == segment) {
+            return oil_panic_segment_values[i];
+        }
+    }
+    return false;
+}
+
+bool oil_panic_any_segments_true(uint8 seg1, uint8 seg2, uint8 seg3)
+{
+    for (int i = 0; i < 17; i++) {
+        uint8 seg = oil_panic_segments[i];
+
+        if (seg == seg1 || seg == seg2 || seg == seg3) {
+            if (oil_panic_segment_values[i] == true) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+__attribute__((optimize("unroll-loops"))) static inline void oil_panic_update_segment_4bits(uint8 segment_nb, bool segment_state)
+{
+	if (!oil_panic_is_process_segment(segment_nb)) {
+		update_segment_4bits(segment_nb, segment_state); // not player segment, render as normal
+	}
+	else {
+		oil_panic_set_segment(segment_nb, segment_state);
+	}
+}
+
+static inline void oil_panic_complete_processing()
+{
+	
+	if (oil_panic_get_segment(40) && oil_panic_get_segment(123)) { // start up screen - show all
+		for (int i = 0; i < 17; i++) {
+			update_segment_4bits(oil_panic_segments[i], true);
+		}
+	}
+	else {
+	
+		if (oil_panic_get_segment(40)) {
+			update_segment_4bits(40, true); // torso left balcony 
+		}
+		else if (oil_panic_get_segment(46)) {
+			update_segment_4bits(46, true); // torso left
+			update_segment_4bits(104, true); // bucket left
+			update_segment_4bits(100, oil_panic_any_segments_true(100, 128, 60)); // left bucket level top
+			update_segment_4bits(106, oil_panic_any_segments_true(106, 114, 55)); // left bucket level middle
+			update_segment_4bits(44, oil_panic_any_segments_true(44, 48, 56)); // left bucket level bottom
+		}
+		else if (oil_panic_get_segment(50)) {
+			update_segment_4bits(50, true); // torso middle
+			update_segment_4bits(112, true); // bucket middle
+			update_segment_4bits(128, oil_panic_any_segments_true(100, 128, 60));  // middle bucket level top
+			update_segment_4bits(114, oil_panic_any_segments_true(106, 114, 55));  // middle bucket level middle
+			update_segment_4bits(48, oil_panic_any_segments_true(44, 48, 56)); // middle bucket level bottom
+		}
+		else if (oil_panic_get_segment(59)) {
+			update_segment_4bits(59, true); // torso right
+			update_segment_4bits(52, true); // bucket right
+			update_segment_4bits(60, oil_panic_any_segments_true(100, 128, 60)); // right bucket level top
+			update_segment_4bits(55, oil_panic_any_segments_true(106, 114, 55)); // right bucket level middle
+			update_segment_4bits(56, oil_panic_any_segments_true(44, 48, 56)); // right bucket level bottom
+		}
+		else if (oil_panic_get_segment(123)) {
+			update_segment_4bits(123, true); // torso right balcony
+		}
+	
+	}
+}
+
+/* Oil Panic processing end */
+
 /* Specific functions to pool segments status */
 
 /* Flicker filter enable flag */
@@ -355,6 +477,10 @@ __attribute__((optimize("unroll-loops"))) inline void gw_gfx_sm510_rendering(uin
 
 		update_segment(132 + seg_z, ((segment_state & (1 << seg_z)) != 0));
 	}
+	
+	if (process_oil_panic) {
+		oil_panic_complete_processing();
+	}
 }
 
 /* SM500 I/O based LCD controller */
@@ -416,41 +542,52 @@ void gw_gfx_init()
 	/* init LCD deflicker level */
 	// for emulated cpus side
 	flag_lcd_deflicker_level = (gw_head.flags & FLAG_LCD_DEFLICKER_MASK) >> 6;
-	
-	 // fix for chef and Tropical Fish and Flagman - printf("[%.8s]\n", gw_head.rom_signature);
-    if (memcmp(gw_head.rom_signature, "gnw_chef", 8) == 0) {
-        flag_lcd_deflicker_level = 1;
-    }
-    else if (memcmp(gw_head.rom_signature, "nw_tfish", 8) == 0) {
-        flag_lcd_deflicker_level = 0;
-    }
-    else if (memcmp(gw_head.rom_signature, "_flagman", 8) == 0) {
-        flag_lcd_deflicker_level = 1;
-    }
-    else if (memcmp(gw_head.rom_signature, "_octopus", 8) == 0
-				|| memcmp(gw_head.rom_signature, "gnw_ball", 8) == 0
-				|| memcmp(gw_head.rom_signature, "nw_judge", 8) == 0
-				|| memcmp(gw_head.rom_signature, "manholeg", 8) == 0
-				|| memcmp(gw_head.rom_signature, "w_helmet", 8) == 0
-				|| memcmp(gw_head.rom_signature, "gnw_lion", 8) == 0
-				|| memcmp(gw_head.rom_signature, "w_pchute", 8) == 0
-				|| memcmp(gw_head.rom_signature, "w_mmouse", 8) == 0
-				|| memcmp(gw_head.rom_signature, " gnw_egg", 8) == 0
-				|| memcmp(gw_head.rom_signature, "gnw_fire", 8) == 0
-    
-    ) {
-		// hack for some games to update segments in sm500_op_trs subroutine
+
+    // fix for some roms by changing flag_lcd_deflicker_level - printf("[%.8s]\n", gw_head.rom_signature);
+    if IS_ROM("nw_tfish") {
+		// change from value set in lcd game shrinker
+		flag_lcd_deflicker_level = 0;
+	}
+	else if (IS_ROM("gnw_chef") || IS_ROM("_flagman")) {
+		// change from value set in lcd game shrinker
+		flag_lcd_deflicker_level = 1;
+	}
+	else if (IS_ROM("_octopus") || IS_ROM("gnw_ball")  || IS_ROM("nw_judge")
+				|| IS_ROM("manholeg") || IS_ROM("w_helmet") || IS_ROM("gnw_lion")
+				|| IS_ROM("w_pchute") || IS_ROM("w_mmouse") || IS_ROM(" gnw_egg")
+				|| IS_ROM("gnw_fire")) {
+		// flag level 2 rom that need to also update segments in sm500_op_trs subroutine
 		flag_lcd_deflicker_level = 3;
+	}
+    else if IS_ROM("w_popeye") {
+		// flag level 2 rom that need to also update segments in sm500_op_rtn1
+		flag_lcd_deflicker_level = 4;
+	}
+	else if IS_ROM("nw_fires") {
+		// flag level 2 rom that need to also update segments in sm500_op_atbp
+		flag_lcd_deflicker_level = 5;
 	}
 
 	// for segments rendering side
 	deflicker_enabled = (flag_lcd_deflicker_level != 0);
+	
+	if (IS_ROM("w_opanic")) {
+		// special segment processing for oil panic
+		process_oil_panic = true;
+	}
 
 	/* determine which API to use for segments rendering */
 	update_segment = update_segment_8bits;
 
-	if (gw_head.flags & FLAG_SEGMENTS_4BITS)
-		update_segment = update_segment_4bits;
+	if (gw_head.flags & FLAG_SEGMENTS_4BITS) {
+		if (process_oil_panic) {
+			update_segment = oil_panic_update_segment_4bits;
+		}
+		else {
+			update_segment = update_segment_4bits;
+		}
+	}
+	
 	if (gw_head.flags & FLAG_SEGMENTS_2BITS)
 		update_segment = update_segment_2bits;
 
