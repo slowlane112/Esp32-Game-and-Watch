@@ -183,6 +183,15 @@ lz4_uncompress(const void *src, void *dst)
 		/* get the compressed size */
 		memcpy(&compressed_size, &in[compressed_size_offset], sizeof(compressed_size));
 
+		/* Validate sizes from header before decompression to prevent buffer overflows */
+		if (compressed_size == 0 || compressed_size > 512 * 1024)
+			return 0;
+		if ((flags & LZ4_FLG_MASK_C_SIZE) != 0)
+		{
+			if (original_size == 0 || original_size > 512 * 1024)
+				return 0;
+		}
+
 		/* Uncompress the content to RAM */
 		uncompressed_size = lz4_depack(&in[content_offset], out, compressed_size);
 
