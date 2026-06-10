@@ -118,7 +118,7 @@ The diagrams below show how to mount the buttons:
 
 # Wiring
 
-## LCD ILI9341
+## LCD
 - VCC:        ESP32 3.3v
 - GND:        GND
 - CS:         GND
