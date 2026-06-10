@@ -88,13 +88,7 @@ idf.py build
 Then: 
 
 ```
-idf.py -DDISPLAY=ili9341 -p /dev/ttyACM0 flash
-```
-
-or
-
-```
-idf.py -DDISPLAY=st7789 -p /dev/ttyACM0 flash
+idf.py -p /dev/ttyACM0 flash
 ```
 
 You can also monitor by adding monitor at the end: 
