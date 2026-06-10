@@ -1,21 +1,64 @@
-#include <stdio.h>
-#include <string.h>
+#include "esp_timer.h"
 #include <gw_system.h>
-#include "menu.h"
 #include "game.h"
 #include "pixel_font.h"
+#include "button.h"
+#include "keyboard.h"
+#include "display.h"
 
-uint16_t disabled_color = BYTE_SWAP ? 0xf49c : 0x9cf4;
-uint16_t menu_bg_color = BYTE_SWAP ? 0xf8bd : 0xbdf8;
-uint16_t menu_bar_line_color = BYTE_SWAP ? 0xf49c : 0x9cf4;
 bool menu_show = true;
 bool menu_update = true;
 uint8_t menu_index = 0;
-uint32_t menu_time = 0;
-extern const uint8_t img_start[] asm("_binary_menu_raw_start");
-extern const uint8_t img_end[]   asm("_binary_menu_raw_end");
+static uint16_t disabled_color = BYTE_SWAP ? 0xf49c : 0x9cf4;
+static uint16_t menu_bg_color = BYTE_SWAP ? 0xf8bd : 0xbdf8;
+static uint32_t menu_time = 0;
 
-uint16_t menu_get_color(uint16_t color) 
+#if defined(MODEL_CARDPUTER)
+	extern const uint8_t img_start[] asm("_binary_menu_cardputer_raw_start");
+	extern const uint8_t img_end[]   asm("_binary_menu_cardputer_raw_end");
+#elif defined(MODEL_CARDPUTER_MULTI_SCREEN)
+	extern const uint8_t img_start[] asm("_binary_menu_cardputer_multi_screen_raw_start");
+	extern const uint8_t img_end[]   asm("_binary_menu_cardputer_multi_screen_raw_end");
+#endif
+
+static void menu_move(bool move_up) {
+
+	uint32_t current_time = esp_timer_get_time() / 1000;
+
+	if (current_time - menu_time > 200) {
+		if (move_up) {
+			if (menu_index < game_count - 1) {
+				menu_index++;
+			}
+		}
+		else {
+			if (menu_index > 0) {
+				menu_index--;
+			}
+		}
+
+		menu_time = current_time;
+		menu_update = true;
+	}
+}
+
+void menu_buttons_process(void)
+{
+	char key = keyboard_get_key();
+	uint8_t menu_button = button_get_menu_buttons(key);
+	if (menu_button == 1) { 
+		menu_move(true);
+	}
+	else if (menu_button == 2) {
+		menu_move(false);
+	}
+	else if (menu_button == 3) {
+		game_save_selected(menu_index);
+		menu_show = false;
+	}
+}
+
+static uint16_t menu_get_color(uint16_t color) 
 {
 	if (BYTE_SWAP) {
 		return __builtin_bswap16(color);
@@ -24,7 +67,7 @@ uint16_t menu_get_color(uint16_t color)
 	return color;
 }
 
-void menu_display_pixel_font_pixel(unsigned short *framebuffer, int x_pos, int y_pos, uint16_t color) 
+static void menu_display_pixel_font_pixel(unsigned short *framebuffer, int x_pos, int y_pos, uint16_t color) 
 {
 	
 	for (int i = 0; i < 1; i++) {
@@ -35,7 +78,7 @@ void menu_display_pixel_font_pixel(unsigned short *framebuffer, int x_pos, int y
 	
 }
 
-void menu_display_text(unsigned short *framebuffer, const char *text, int y_start, int x_start, uint16_t text_fg_color, uint16_t text_bg_color) 
+static void menu_display_text(unsigned short *framebuffer, const char *text, int y_start, int x_start, uint16_t text_fg_color, uint16_t text_bg_color) 
 {
 	
 	uint8_t pixel_font_data = 0;
@@ -68,7 +111,7 @@ void menu_display_text(unsigned short *framebuffer, const char *text, int y_star
 	
 }
 
-void menu_display_arrow(unsigned short *framebuffer, int y_start, int x_start, uint16_t fg_color, uint16_t bg_color, bool flip) 
+static void menu_display_arrow(unsigned short *framebuffer, int y_start, int x_start, uint16_t fg_color, uint16_t bg_color, bool flip) 
 {
 	uint8_t arrow_icon_8x15[15][8] = {
 		{1,0,0,0,0,0,0,0},
@@ -105,173 +148,428 @@ void menu_display_arrow(unsigned short *framebuffer, int y_start, int x_start, u
 	}
 }
 
-int menu_get_game_offset(uint8_t index)
-{
-    int offset = 0;
+#if defined(MODEL_CARDPUTER)
 
-    for (uint8_t i = 0; i < index; i++) {
-        offset += games[i].img_width * games[i].img_height;
-    }
+	static uint16_t menu_bar_line_color = BYTE_SWAP ? 0xf49c : 0x9cf4;
 
-    return offset;
-}
+	static int menu_get_game_offset(uint8_t index)
+	{
+		int offset = 0;
 
-void menu_display_top_section(unsigned short *framebuffer, uint16_t bar_color, Game game)
-{
-	
-	int text_width = 8 * 19;
-    int text_height = 16;	
-	int y_start = 3;
-    int x_start = (GW_SCREEN_WIDTH - text_width) / 2;
-    
-    int fb_pos = 0;
-	
-	for (int y = 0; y < 23; y++) {
+		for (uint8_t i = 0; i < index; i++) {
+			offset += games[i].img_unit_width * games[i].img_unit_height;
+		}
+
+		return offset;
+	}
+
+	static void menu_display_top_section(unsigned short *framebuffer, uint16_t bar_color, Game game)
+	{
 		
-        for (int x = 0; x < GW_SCREEN_WIDTH; x++) {
+		int text_width = 8 * 19;
+		int text_height = 16;	
+		int y_start = 3;
+		int x_start = (GW_SCREEN_WIDTH - text_width) / 2;
+		
+		int fb_pos = 0;
+		
+		for (int y = 0; y < 23; y++) {
 			
-			if (!(y >= y_start
-				&& x >= x_start
-				&& y < y_start + text_height
-				&& x < x_start + text_width)) {
-			
-					framebuffer[fb_pos] = (y == 22) ? menu_bar_line_color : bar_color;
-			
+			for (int x = 0; x < GW_SCREEN_WIDTH; x++) {
+				
+				if (!(y >= y_start
+					&& x >= x_start
+					&& y < y_start + text_height
+					&& x < x_start + text_width)) {
+				
+						framebuffer[fb_pos] = (y == 22) ? menu_bar_line_color : bar_color;
+				
+				}
+				
+				fb_pos++;
+				
 			}
 			
-			fb_pos++;
-			
 		}
+
+		menu_display_text(framebuffer, "Select Game & Watch", y_start, x_start, game.text_color, bar_color);
 		
 	}
 
-	menu_display_text(framebuffer, "Select Game & Watch", y_start, x_start, game.text_color, bar_color);
-	
-}
-
-void menu_display_bottom_section(unsigned short *framebuffer, uint16_t bar_color, Game game)
-{
-	
-    int text_height = 16;
-	int text_y_start = (GW_SCREEN_HEIGHT - 19);
-    
-	int text1_width = 8 * strlen(game.name);
-    int text1_x_start = 3;
-    
-    int text2_width = 8 * strlen(game.year);
-    int text2_x_start = GW_SCREEN_WIDTH - text2_width - 3;
-    
-    int y_start = GW_SCREEN_HEIGHT - 23;
-    
-    int fb_pos = y_start * GW_SCREEN_WIDTH;
-	
-	for (int y = y_start; y < GW_SCREEN_HEIGHT; y++) {
+	static void menu_display_bottom_section(unsigned short *framebuffer, uint16_t bar_color, Game game)
+	{
 		
-        for (int x = 0; x < GW_SCREEN_WIDTH; x++) {
+		int text_height = 16;
+		int text_y_start = (GW_SCREEN_HEIGHT - 19);
+		
+		int text1_width = 8 * strlen(game.name);
+		int text1_x_start = 3;
+		
+		int text2_width = 8 * strlen(game.year);
+		int text2_x_start = GW_SCREEN_WIDTH - text2_width - 3;
+		
+		int y_start = GW_SCREEN_HEIGHT - 23;
+		
+		int fb_pos = y_start * GW_SCREEN_WIDTH;
+		
+		for (int y = y_start; y < GW_SCREEN_HEIGHT; y++) {
 			
-			if (!
-					(
+			for (int x = 0; x < GW_SCREEN_WIDTH; x++) {
+				
+				if (!
 						(
-							y >= text_y_start
-							&& x >= text1_x_start
-							&& y < text_y_start + text_height
-							&& x < text1_x_start + text1_width
+							(
+								y >= text_y_start
+								&& x >= text1_x_start
+								&& y < text_y_start + text_height
+								&& x < text1_x_start + text1_width
+							)
+							||
+							(
+								y >= text_y_start
+								&& x >= text2_x_start
+								&& y < text_y_start + text_height
+								&& x < text2_x_start + text2_width
+							)
+						
 						)
-						||
-						(
-							y >= text_y_start
-							&& x >= text2_x_start
-							&& y < text_y_start + text_height
-							&& x < text2_x_start + text2_width
-						)
-					
-					)
-				) {
-			
-					framebuffer[fb_pos] = (y == y_start) ? menu_bar_line_color : bar_color;
-			
+					) {
+				
+						framebuffer[fb_pos] = (y == y_start) ? menu_bar_line_color : bar_color;
+				
+				}
+				
+				fb_pos++;
+				
 			}
 			
-			fb_pos++;
-			
 		}
+
+		menu_display_text(framebuffer, game.name, text_y_start, text1_x_start, game.text_color, bar_color);		
+
+		menu_display_text(framebuffer, game.year, text_y_start, text2_x_start, game.text_color, bar_color);
 		
 	}
 
-	menu_display_text(framebuffer, game.name, text_y_start, text1_x_start, game.text_color, bar_color);		
+	void menu_display_item(unsigned short *framebuffer, int index)
+	{
 
-	menu_display_text(framebuffer, game.year, text_y_start, text2_x_start, game.text_color, bar_color);
-	
-}
-
-void menu_display_item(unsigned short *framebuffer, int index)
-{
-
-	int offset = menu_get_game_offset(index);
-	Game game = games[index];
-	
-	int arrow_y = (GW_SCREEN_HEIGHT / 2) - 7;
-	int arrow1_x = 11;
-	int arrow2_x = GW_SCREEN_WIDTH - 11 - 8;
-	const uint16_t *img = (const uint16_t *)img_start + offset;
-	int mid_pixel_index = game.color_line * game.img_width + (game.img_width / 2);
-	uint16_t bar_color = menu_get_color(img[mid_pixel_index]);
-	uint16_t px_color = 0;
-	int img_pos = 0;
-	int img_y = (GW_SCREEN_HEIGHT - game.img_height) / 2;
-    int img_x = (GW_SCREEN_WIDTH - game.img_width) / 2;
-	int fb_pos = 23 * GW_SCREEN_WIDTH;
-	
-	for (int y = 23; y < GW_SCREEN_HEIGHT - 23; y++) {
+		int offset = menu_get_game_offset(index);
+		Game game = games[index];
 		
-        for (int x = 0; x < GW_SCREEN_WIDTH; x++) {
-
-			if (
-					!(
-						(y >= arrow_y
-						&& y < arrow_y + 15
-						&& x >= arrow1_x
-						&& x < arrow1_x + 8)
-						||
-						(y >= arrow_y
-						&& y < arrow_y + 15
-						&& x >= arrow2_x
-						&& x < arrow2_x + 8)
-					)
-				) {
-
-
-					if (y >= img_y 
-						&& x >= img_x 
-						&& y < (img_y + game.img_height)
-						&& x < (img_x + game.img_width)) {
-							
-							px_color = menu_get_color(img[img_pos]);
-							img_pos++;
-							
-
-					}
-					else {
-						px_color = menu_bg_color;
-					}
+		int arrow_y = (GW_SCREEN_HEIGHT / 2) - 7;
+		int arrow1_x = 11;
+		int arrow2_x = GW_SCREEN_WIDTH - 11 - 8;
+		const uint16_t *img = (const uint16_t *)img_start + offset;
+		int mid_pixel_index = game.color_line * game.img_unit_width + (game.img_unit_width / 2);
+		uint16_t bar_color = menu_get_color(img[mid_pixel_index]);
+		uint16_t px_color = 0;
+		int img_pos = 0;
+		int img_y = (GW_SCREEN_HEIGHT - game.img_unit_height) / 2;
+		int img_x = (GW_SCREEN_WIDTH - game.img_unit_width) / 2;
+		int fb_pos = 23 * GW_SCREEN_WIDTH;
+		
+		for (int y = 23; y < GW_SCREEN_HEIGHT - 23; y++) {
 			
-					framebuffer[fb_pos] = px_color;
-					
+			for (int x = 0; x < GW_SCREEN_WIDTH; x++) {
+
+				if (
+						!(
+							(y >= arrow_y
+							&& y < arrow_y + 15
+							&& x >= arrow1_x
+							&& x < arrow1_x + 8)
+							||
+							(y >= arrow_y
+							&& y < arrow_y + 15
+							&& x >= arrow2_x
+							&& x < arrow2_x + 8)
+						)
+					) {
+
+
+						if (y >= img_y 
+							&& x >= img_x 
+							&& y < (img_y + game.img_unit_height)
+							&& x < (img_x + game.img_unit_width)) {
+								
+								px_color = menu_get_color(img[img_pos]);
+								img_pos++;
+								
+
+						}
+						else {
+							px_color = menu_bg_color;
+						}
+				
+						framebuffer[fb_pos] = px_color;
+						
+				}
+				
+				fb_pos++;
+				
+			}
+		}
+		
+		menu_display_arrow(framebuffer, arrow_y, arrow1_x, index == 0 ? disabled_color : bar_color, menu_bg_color, true);
+		
+		menu_display_arrow(framebuffer, arrow_y, arrow2_x, (index == game_count - 1) ? disabled_color : bar_color, menu_bg_color, false);
+		
+		menu_display_top_section(framebuffer, bar_color, game);
+		
+		menu_display_bottom_section(framebuffer, bar_color, game);
+		
+	} 
+
+#elif defined(MODEL_CARDPUTER_MULTI_SCREEN)
+
+
+	static int menu_get_game_offset(uint8_t index)
+	{
+		
+		int item = 0;
+		int offset = 0;
+
+		for (uint8_t i = 0; i < game_count; i++) {
+			
+			if (index == item) {
+				return offset;
 			}
 			
-			fb_pos++;
+			offset += games[i].img_unit_width * games[i].img_unit_height;
+			item ++;
+			
+			if (index == item) {
+				return offset;
+			}
+			
+			offset += games[i].img_box_width * games[i].img_box_height;
+			item ++;
+		}
+
+		return 0;
+	}
+
+	static void menu_display_top_section(unsigned short *framebuffer, uint16_t box_bg_color, Game game)
+	{
+		
+		int text_width = 8 * 19;
+		int text_height = 16;	
+		int y_start = RENDER_HEIGHT + 3;
+		int x_start = (GW_SCREEN_WIDTH - text_width) / 2;
+		
+		int fb_pos = RENDER_HEIGHT * GW_SCREEN_WIDTH;
+		
+		for (int y = RENDER_HEIGHT; y < RENDER_HEIGHT + 23; y++) {
+			
+			for (int x = 0; x < GW_SCREEN_WIDTH; x++) {
+				
+				if (!(y >= y_start
+					&& x >= x_start
+					&& y < y_start + text_height
+					&& x < x_start + text_width)) {
+				
+						framebuffer[fb_pos] = box_bg_color;
+				
+				}
+				
+				fb_pos++;
+				
+			}
 			
 		}
-    }
-    
-    //uint16_t bar_color = 0xff00;
-	
-	menu_display_arrow(framebuffer, arrow_y, arrow1_x, index == 0 ? disabled_color : bar_color, menu_bg_color, true);
-	
-	menu_display_arrow(framebuffer, arrow_y, arrow2_x, (index == game_count - 1) ? disabled_color : bar_color, menu_bg_color, false);
-	
-	menu_display_top_section(framebuffer, bar_color, game);
-    
-	menu_display_bottom_section(framebuffer, bar_color, game);
-	
-} 
+
+		menu_display_text(framebuffer, "Select Game & Watch", y_start, x_start, menu_get_color(game.text_color), box_bg_color);
+		
+	}
+
+	static void menu_display_bottom_section(unsigned short *framebuffer, uint16_t box_bg_color, Game game)
+	{
+		
+		int text_height = 16;
+		int text_y_start = RENDER_HEIGHT + (RENDER_HEIGHT - 19);
+		
+		int text1_width = 8 * strlen(game.name);
+		int text1_x_start = 3;
+		
+		int text2_width = 8 * strlen(game.year);
+		int text2_x_start = GW_SCREEN_WIDTH - text2_width - 3;
+		
+		int y_start = RENDER_HEIGHT + (RENDER_HEIGHT - 23);
+		
+		int fb_pos = y_start * GW_SCREEN_WIDTH;
+		
+		for (int y = y_start; y < GW_SCREEN_HEIGHT; y++) {
+			
+			for (int x = 0; x < GW_SCREEN_WIDTH; x++) {
+				
+				if (!
+						(
+							(
+								y >= text_y_start
+								&& x >= text1_x_start
+								&& y < text_y_start + text_height
+								&& x < text1_x_start + text1_width
+							)
+							||
+							(
+								y >= text_y_start
+								&& x >= text2_x_start
+								&& y < text_y_start + text_height
+								&& x < text2_x_start + text2_width
+							)
+						
+						)
+					) {
+				
+						framebuffer[fb_pos] = box_bg_color;
+				}
+				
+				fb_pos++;
+				
+			}
+			
+		}
+
+		menu_display_text(framebuffer, game.name, text_y_start, text1_x_start, menu_get_color(game.text_color), box_bg_color);		
+
+		menu_display_text(framebuffer, game.year, text_y_start, text2_x_start, menu_get_color(game.text_color), box_bg_color);
+
+		
+	}
+
+
+	void menu_display_item(unsigned short *framebuffer, int index)
+	{
+
+		Game game = games[index];
+
+		// start of unit image in menu.raw
+		int unit_offset = menu_get_game_offset((index * 2));
+		const uint16_t *unit_img = (const uint16_t *)img_start + unit_offset;
+		
+		// start of box image in menu.raw
+		int box_offset = menu_get_game_offset((index * 2) + 1);
+		const uint16_t *box_img = (const uint16_t *)img_start + box_offset;
+
+		uint16_t box_bg_color = menu_get_color(game.box_bg_color);
+		uint16_t box_border_color = menu_get_color(game.box_border_color);
+		uint16_t text_color = menu_get_color(game.text_color);
+		
+		uint16_t px_color = 0;
+
+		// render top screen
+		
+		int unit_img_pos = 0;
+		int unit_img_y = (RENDER_HEIGHT - game.img_unit_height) / 2;
+		int unit_img_x = (GW_SCREEN_WIDTH - game.img_unit_width) / 2;
+		
+		int fb_pos = 0;
+		
+		
+		for (int y = 0; y < RENDER_HEIGHT; y++) {
+			
+			for (int x = 0; x < GW_SCREEN_WIDTH; x++) {
+				
+				if (y >= unit_img_y 
+					&& x >= unit_img_x 
+					&& y < (unit_img_y + game.img_unit_height)
+					&& x < (unit_img_x + game.img_unit_width)) {
+						
+						px_color = menu_get_color(unit_img[unit_img_pos]);
+						unit_img_pos++;
+						
+
+				}
+				else {
+					px_color = menu_bg_color;
+				}
+		
+				framebuffer[fb_pos] = px_color;
+			
+				fb_pos++;	
+			}
+			
+		}
+		
+		// render bottom screen
+		
+		int box_img_pos = 0;
+		int box_img_y = RENDER_HEIGHT + ((RENDER_HEIGHT - game.img_box_height) / 2);
+		int box_img_x = (GW_SCREEN_WIDTH - game.img_box_width) / 2;
+		
+		// arrow position
+		int arrow_y = RENDER_HEIGHT + ((RENDER_HEIGHT / 2) - 7);
+		int arrow1_x = 6;
+		int arrow2_x = GW_SCREEN_WIDTH - 6 - 8;
+		
+		fb_pos = (RENDER_HEIGHT + 23) * GW_SCREEN_WIDTH;
+		
+		for (int y = RENDER_HEIGHT + 23; y < GW_SCREEN_HEIGHT - 23; y++) {
+			
+			for (int x = 0; x < GW_SCREEN_WIDTH; x++) {
+
+				if (
+						!(
+							(y >= arrow_y
+							&& y < arrow_y + 15
+							&& x >= arrow1_x
+							&& x < arrow1_x + 8)
+							||
+							(y >= arrow_y
+							&& y < arrow_y + 15
+							&& x >= arrow2_x
+							&& x < arrow2_x + 8)
+						)
+					) {
+
+						if (y >= box_img_y 
+							&& x >= box_img_x 
+							&& y < (box_img_y + game.img_box_height)
+							&& x < (box_img_x + game.img_box_width)) {
+								
+								if (y == box_img_y 
+									|| y == (box_img_y + game.img_box_height - 1)
+									|| x == box_img_x
+									|| x == (box_img_x + game.img_box_width - 1)
+									
+								)
+								{
+									// border
+									px_color = box_border_color;
+
+								}
+								else {
+								
+									px_color = menu_get_color(box_img[box_img_pos]);
+								
+								}
+								
+								box_img_pos++;
+								
+
+						}
+						else {
+							px_color = box_bg_color; 
+						}
+				
+						framebuffer[fb_pos] = px_color;
+						
+				}
+				
+				fb_pos++;
+				
+			}
+		}
+		
+		menu_display_arrow(framebuffer, arrow_y, arrow1_x, index == 0 ? disabled_color : text_color, box_bg_color, true);
+		
+		menu_display_arrow(framebuffer, arrow_y, arrow2_x, (index == game_count - 1) ? disabled_color : text_color, box_bg_color, false);
+		
+		menu_display_top_section(framebuffer, box_bg_color, game);
+		
+		menu_display_bottom_section(framebuffer, box_bg_color, game);
+		
+	}
+
+#endif

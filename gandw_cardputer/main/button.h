@@ -1,12 +1,27 @@
 #ifndef BUTTON_H
 #define BUTTON_H
 
-extern uint8_t button_control_type;
-extern uint8_t button_control_mode;
+typedef enum : uint8_t {
+	BUTTON_CONTROL_TYPE_NONE = 0,
+	BUTTON_CONTROL_TYPE_TWO_BUTTON = 1,
+	BUTTON_CONTROL_TYPE_FOUR_BUTTON = 2,
+	BUTTON_CONTROL_TYPE_DPAD = 3,
+	BUTTON_CONTROL_TYPE_MULTI_DIRECTION = 4,
+	BUTTON_CONTROL_TYPE_BLACKJACK = 5
+} button_control_type_t;
+
+typedef enum : uint8_t {
+	BUTTON_CONTROL_MODE_NONE = 0,
+	BUTTON_CONTROL_MODE_TROPICAL_FISH = 1,
+	BUTTON_CONTROL_MODE_SNOOPY_TENNIS = 2,
+	BUTTON_CONTROL_MODE_MARIOS_CEMENT_FACTORY = 3,
+	BUTTON_CONTROL_MODE_FLAGMAN_LION = 4,
+	BUTTON_CONTROL_MODE_SQUISH = 5
+} button_control_mode_t;
+
+extern button_control_type_t button_control_type;
+extern button_control_mode_t button_control_mode;
 extern uint8_t button_start_delay;
 uint8_t button_get_menu_buttons(char key);
-unsigned int button_get_four_buttons(char key);
-unsigned int button_get_two_buttons(char key);
-unsigned int button_get_five_buttons(char key);
 
 #endif

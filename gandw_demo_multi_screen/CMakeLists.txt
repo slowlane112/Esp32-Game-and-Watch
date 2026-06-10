@@ -1,0 +1,5 @@
+cmake_minimum_required(VERSION 3.16)
+add_compile_definitions(MODEL_DEMO_MULTI_SCREEN=1)
+set(EXTRA_COMPONENT_DIRS ../components)
+include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+project(gandw_demo_multi_screen)

@@ -1,0 +1,8 @@
+## IDF Component Manager Manifest File
+dependencies:
+  ## Required IDF version
+  idf:
+    version: ">=6.0.0"
+
+  ## Required ILI9341 driver version for IDF 6.x compatibility
+  espressif/esp_lcd_ili9341: ^2.0.0
