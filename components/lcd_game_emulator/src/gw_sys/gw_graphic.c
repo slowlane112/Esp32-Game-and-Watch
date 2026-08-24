@@ -44,13 +44,8 @@ __license__ = "GPLv3"
 #define GW_MASK_RGB565_B 0x001F
 
 bool process_oil_panic = false;
-
-#define IS_ROM(s) (memcmp(gw_head.rom_signature, s, 8) == 0)
-
 static uint16 *gw_graphic_framebuffer = 0;
-
 static uint16 *source_mixer = 0;
-
 static uint8 SEG_TRANSPARENT_COLOR = 0;
 static uint16 SEG_TRANSPARENT_COLOR_16_BIT = 0;
 #define SEG_WHITE_COLOR 0xff
@@ -704,10 +699,15 @@ void gw_gfx_init()
 		// change from value set in lcd game shrinker
 		flag_lcd_deflicker_level = 1;
 	}
-	else if (IS_ROM("_octopus") || IS_ROM("gnw_ball")  || IS_ROM("nw_judge")
-				|| IS_ROM("manholeg") || IS_ROM("w_helmet") || IS_ROM("gnw_lion")
-				|| IS_ROM("w_pchute") || IS_ROM("w_mmouse") || IS_ROM(" gnw_egg")
-				|| IS_ROM("gnw_fire")) {
+	else if (IS_ROM("_octopus") || IS_ROM("gnw_ball")  || IS_ROM("nw_judge") || IS_ROM("manholeg") || IS_ROM("w_helmet")
+		|| IS_ROM("gnw_lion") || IS_ROM("w_pchute") || IS_ROM("w_mmouse") || IS_ROM(" gnw_egg") || IS_ROM("gnw_fire")
+		|| IS_ROM("auslalom") || IS_ROM("nochnyev") || IS_ROM("atakaast") || IS_ROM("krybolov") || IS_ROM(" ecircus")
+		|| IS_ROM("  okhota") || IS_ROM("morataka") || IS_ROM("kvakazad") || IS_ROM("kosmicpt") || IS_ROM("biathlon")
+		|| IS_ROM(" ehockey") || IS_ROM("rkosmosa") || IS_ROM(" vfutbol") || IS_ROM("taynyoke") || IS_ROM("kosmicmt")
+		|| IS_ROM("nupogodi") || IS_ROM("vespovar")
+		|| IS_ROM("rthuball") || IS_ROM("rsrescue") || IS_ROM("trsgkeep") || IS_ROM("trdivadv") || IS_ROM("trspider") 
+		|| IS_ROM("rspacmis") || IS_ROM("tigarden") || IS_ROM("rshutvoy")
+	) {
 		// flag level 2 rom that need to also update segments in sm500_op_trs subroutine
 		flag_lcd_deflicker_level = 3;
 	}

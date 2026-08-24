@@ -92,6 +92,141 @@ unsigned int *gw_keyboard = NULL;
 
 gwromheader_t gw_head;
 
+
+
+/**************** Time and Alarm *******************/
+/*
+	By default, LCD-Game-Shrinker does not map the time and alarm buttons.
+	The following struct contains the time and alarm button positions from mame's hh_sm510.cpp file.
+	Nintendo, Elektronika and Tronica
+*/
+
+typedef struct
+{
+	const char *rom_signature;
+	uint8_t time_pos;
+	uint8_t alarm_pos;
+} input_time_alarm_pos_t;
+
+static const input_time_alarm_pos_t input_time_alarm_pos[] =
+{
+	{ "gnw_ball",   4, 255 },
+	{ "_flagman",  12, 255 },
+	{ "w_vermin",   4, 255 },
+	{ "nw_fires",   4, 255 },
+	{ "nw_judge",  12, 255 },
+	{ "w_judgeo",  12, 255 },
+	{ "manholeg",  12,  15 },
+	{ "w_helmet",  12,  15 },
+	{ "_helmeto",  12,  15 },
+	{ "gnw_lion",  12,  15 },
+	{ "w_pchute",  12,  15 },
+	{ "_octopus",  12,  15 },
+	{ "w_popeye",  12,  15 },
+	{ "gnw_chef",  12,  15 },
+	{ "w_mmouse",  12,  15 },
+	{ " gnw_egg",  12,  15 },
+	{ "gnw_fire",  12,  15 },
+	{ "_tbridge",   4,   7 },
+	{ "_fireatk",   4,   7 },
+	{ "_stennis",   4,   7 },
+	{ "w_opanic",   4,   7 },
+	{ "nw_dkong",   8,  11 },
+	{ "_mickdon",   4,   7 },
+	{ "w_ghouse",   8,  11 },
+	{ "w_dkong2",   8,  11 },
+	{ "nw_mario",   4,   7 },
+	{ "_rshower",   1,   7 },
+	{ "nw_lboat",   4,   7 },
+	{ "_pinball",   4,   7 },
+	{ "nw_bjack",   4,   7 },
+	{ "w_squish",   4,   7 },
+	{ "w_bsweep",   4,   7 },
+	{ "_sbuster",   4,   7 },
+	{ "w_gcliff",   8,  11 },
+	{ "nw_zelda",   8,  11 },
+	{ "gnw_dkjr",   8,  11 },
+	{ "_mariocm",   4,   7 },
+	{ "_manhole",   4,   7 },
+	{ "nw_tfish",   4,   7 },
+	{ " gnw_smb",   0,   2 },
+	{ "gnw_smbn",   0,   2 },
+	{ "_climber",   0,   2 },
+	{ "climbern",   0,   2 },
+	{ "w_bfight",   0,   2 },
+	{ "_bfightn",   0,   2 },
+	{ "_mariotj",   4,   7 },
+	{ "mariocmt",   4,   7 },
+	{ "ariocmta",   4,   7 },
+	{ "_snoopyp",   4,   7 },
+	{ "_popeyep",   4,   7 },
+	{ "nw_dkjrp",   8,  11 },
+	{ "w_mbaway",   4,   7 },
+	{ "_mmousep",   4,   7 },
+	{ "w_dkcirc",   4,   7 },
+	{ "_ssparky",   4,   7 },
+	{ "nw_cgrab",   4,   7 },
+	{ "w_boxing",  24,  27 },
+	{ "w_dkong3",  24,  27 },
+	{ "dkhockey",  24,  27 },
+	{ "taynyoke",  12,  15 },
+	{ "vespovar",  12,  15 },
+	{ "nupogodi",  12,  15 },
+	{ " ehockey",  12,  15 },
+	{ "rkosmosa",  12,  15 },
+	{ "  okhota",  12,  15 },
+	{ "biathlon",  12,  15 },
+	{ " vfutbol",  12,  15 },
+	{ "krybolov",  12,  15 },
+	{ "kvakazad",  12,  15 },
+	{ "nochnyev",  12,  15 },
+	{ "kosmicpt",  12,  15 },
+	{ "morataka",  12,  15 },
+	{ "atakaast",  12,  15 },
+	{ " ecircus",  12,  15 },
+	{ " naltair",  12,  15 },
+	{ "kosmicmt",  12,  15 },
+	{ "vinnpukh",   8,  11 },
+	{ "auslalom",  12,  15 },
+	{ " elbaskb", 255, 255 },
+	{ " vesarif",   2,   3 },
+	{ "uchitari", 255, 255 },
+	{ "rshutvoy", 255,  16 },
+	{ "tigarden", 255,  16 },
+	{ "rsrescue",   7,   4 },
+	{ "rthuball",   7,   4 },
+	{ "trsgkeep",  12,  15 },
+	{ "rspacmis",  12,  15 },
+	{ "trspider",  12,  15 },
+	{ "rspacadv", 255,  16 },
+	{ "trtreisl",  15,  12 },
+	{ "trdivadv",   4,   7 },
+	{ "rclchick",   4,   7 }
+
+};
+
+uint8_t get_time_pos(const char rom_signature[ROM_SIGNATURE_LEN])
+{
+	for (size_t i = 0; i < sizeof(input_time_alarm_pos) / sizeof(input_time_alarm_pos[0]); i++)
+	{
+		if (memcmp(rom_signature, input_time_alarm_pos[i].rom_signature, ROM_SIGNATURE_LEN) == 0)
+			return input_time_alarm_pos[i].time_pos;
+	}
+
+	return 255;
+}
+
+uint8_t get_alarm_pos(const char rom_signature[ROM_SIGNATURE_LEN])
+{
+	for (size_t i = 0; i < sizeof(input_time_alarm_pos) / sizeof(input_time_alarm_pos[0]); i++)
+	{
+		if (memcmp(rom_signature, input_time_alarm_pos[i].rom_signature, ROM_SIGNATURE_LEN) == 0)
+			return input_time_alarm_pos[i].alarm_pos;
+	}
+
+	return 255;
+}
+
 /**************** Background *******************/
 /*
 	Background extracted and adapted to GW LCD from BackgroundNS.png file
@@ -332,6 +467,18 @@ bool gw_romloader_rom2ram()
 	  gw_melody = (unsigned char *)&GW_ROM[gw_head.melody];
 
    gw_keyboard = (unsigned int *)&GW_ROM[gw_head.keyboard];
+
+	uint8_t time_pos = get_time_pos(gw_head.rom_signature);
+	if (time_pos != 255)
+	{
+		GW_ROM[gw_head.keyboard + time_pos] = GW_BUTTON_B + GW_BUTTON_TIME;
+	}
+	
+	uint8_t alarm_pos = get_alarm_pos(gw_head.rom_signature);
+	if (alarm_pos != 255)
+	{
+		GW_ROM[gw_head.keyboard + alarm_pos] = GW_BUTTON_B + GW_BUTTON_GAME;
+	}
 
    return true;
 }

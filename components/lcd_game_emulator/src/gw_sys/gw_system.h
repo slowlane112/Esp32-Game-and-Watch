@@ -37,7 +37,10 @@ __license__ = "GPLv3"
 	#define GW_SCREEN_HEIGHT	240
 #endif
 
-#define BYTE_SWAP 1
+#define BYTE_SWAP	1
+#define ROM_SIGNATURE_LEN	8
+#define IS_ROM(s) (memcmp(gw_head.rom_signature, s, 8) == 0)
+
 
 /* refresh rate 128Hz */
 #define GW_REFRESH_RATE 128

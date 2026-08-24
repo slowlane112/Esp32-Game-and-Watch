@@ -519,37 +519,17 @@ unsigned char gw_readK(unsigned char io_S)
 				if ( key_soft_value != 0 )
 				{
 
-                    // removed existing soft key code
-
-					/*if (((gw_keyboard[Sx] & GW_MASK_K1) == (key_soft_value)))
+					if (((gw_keyboard[Sx] & GW_MASK_K1) == (key_soft_value)))
 						io_K |= 0x1;
 					if (((gw_keyboard[Sx] & GW_MASK_K2) == (key_soft_value << 8)))
 						io_K |= 0x2;
 					if (((gw_keyboard[Sx] & GW_MASK_K3) == (key_soft_value << 16)))
 						io_K |= 0x4;
 					if (((gw_keyboard[Sx] & GW_MASK_K4) == (key_soft_value << 24)))
-						io_K |= 0x8;*/
+						io_K |= 0x8;
 
-                    // enable time and alarm buttons to work
-
-                    if ((gw_keyboard[Sx] & GW_MASK_K2) == 16384 && (gw_keyboard[Sx] & GW_MASK_K3) == 8388608) {
-                        if (key_soft_value == KEY_SOFT_TIME) {
-                            io_K |= 0x1;
-                        }
-                        else if (key_soft_value == KEY_SOFT_ALARM) {
-                            io_K |= 0x8;
-                        }
-                    }
-                    else if ((gw_keyboard[Sx] & GW_MASK_K2) == 32768 && (gw_keyboard[Sx] & GW_MASK_K3) == 0) {
-						if (key_soft_value == KEY_SOFT_TIME) {
-                            io_K |= 0x3;
-                        }
-                        else if (key_soft_value == KEY_SOFT_ALARM) {
-                            io_K |= 0x6;
-                        }
-					}
 				}
-
+				
 				// check hardware keys excluding soft keys
 				else
 				{
