@@ -25,9 +25,6 @@ __license__ = "GPLv3"
 #include "gw_romloader.h"
 #include "sm510.h"
 
-
-#include "esp_heap_caps.h"
-
 //  RGB565 16bits pixel format to 32bits pixel format
 /*
 			RRRRRGGGGGGBBBBB
